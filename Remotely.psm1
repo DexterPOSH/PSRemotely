@@ -1,76 +1,29 @@
-﻿function Remotely {
-<#
-.SYNOPSIS
-Executes a script block against a remote runspace. Remotely can be used with Pester for executing script blocks on remote system.
+﻿function Remotely
+{
+    param 
+    (       
+        [Parameter(Mandatory, Position = 0)]
+        [String[]] $Nodes,
+        
+        [Parameter(Mandatory = $true, Position = 1)]
+        [ScriptBlock] $test,
 
-.DESCRIPTION
-The contents on the Remotely block are executed on a remote runspace. The connection information of the runspace is supplied in a CSV file of the format:
+        [Parameter(Mandatory = $false, Position = 2)]
+        $ArgumentList,
 
-ComputerName,Username,Password
-machinename,user,password
-
-The file name must be machineConfig.csv
-
-The CSV file is expected to be placed next to this file. 
-
-If the CSV file is not found or username is not specified, the machine name is ignored and runspace to localhost
-is created for executing the script block.
-
-If the password has a ',' then it needs to be escaped by using quotes like: 
-ComputerName,Username,Password
-machinename,user,"Some,password"
-
-To get access to the streams GetVerbose, GetDebugOutput, GetError, GetProgressOutput, GetWarning can be used on the resultant object.
-
-.PARAMETER Test
-The script block that should throw an exception if the expectation of the test is not met.
-
-.PARAMETER ArgumentList
-Arguments that will be passed to the script block.
-
-.EXAMPLE
-
-Describe "Add-Numbers" {
-    It "adds positive numbers" {
-        Remotely { 2 + 3 } | Should Be 5
-    }
-
-    It "gets verbose message" {
-        $sum = Remotely { Write-Verbose -Verbose "Test Message" }
-        $sum.GetVerbose() | Should Be "Test Message"
-    }
-
-    It "can pass parameters to remote block" {
-        $num = 10
-        $process = Remotely { param($number) $number + 1 } -ArgumentList $num
-        $process | Should Be 11
-    }
-}
-
-.LINK
-https://github.com/PowerShell/Remotely
-https://github.com/pester/Pester
-#>
-
-param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [ScriptBlock] $test = {},
-
-        [Parameter(Mandatory = $false, Position = 1)]
-        $ArgumentList
+        [Parameter(Mandatory = $false, Position = 3)]
+        $CredentialHash = @{}
     )
 
-    if($script:sessionsHashTable -eq $null)
+    if ($script:sessionsHashTable -eq $null)
     {
         $script:sessionsHashTable = @{}
     }
+    
 
-    $machineConfigFile = Join-Path $PSScriptRoot "machineConfig.CSV"
-
-    CreateSessions -machineConfigFile $machineConfigFile
-
+    CreateSessions -Nodes $Nodes -CredentialHash $CredentialHash
+    
     $sessions = @()
-
     foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
     {
         CheckAndReConnect -sessionInfo $sessionInfo
@@ -134,7 +87,11 @@ param(
 
 function CopyStreams
 {
-    param( [Parameter(Position=0, Mandatory=$true)] $inputStream) 
+    param
+    (
+        [Parameter(Position=0, Mandatory=$true)] 
+        $inputStream
+    ) 
 
     $outStream = New-Object 'System.Management.Automation.PSDataCollection[PSObject]'
 
@@ -150,81 +107,80 @@ function CopyStreams
 
 function CreateSessions
 {
-    param([string] $machineConfigFile)
-                
-    if(Test-Path $machineConfigFile)
-    {
-        Write-Verbose "Found machine configuration file: $machineConfigFile"
+    param
+    (
+        [Parameter(Mandatory)]
+        [string[]] $Nodes,
 
-        $machineInfo = Import-Csv $machineConfigFile
-
-        foreach($item in $machineInfo)
-        {
-            if([String]::IsNullOrEmpty($item.UserName))
+        [Parameter()]
+        $CredentialHash
+    )
+               
+    foreach($Node in $Nodes)
+    { 
+        if(-not $script:sessionsHashTable.ContainsKey($Node))
+        {                                   
+            $sessionName = "Remotely-" + $Node                              
+            if ($CredentialHash -and $CredentialHash[$Node])
             {
-                Write-Verbose "No username specified. Creating session to localhost." 
-                CreateLocalSession $item.ComputerName
+                $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -Credential $CredentialHash[$node]) -Credential $CredentialHash[$node]
             }
             else
             {
-                $password = ConvertTo-SecureString -String $item.Password -AsPlainText -Force
-		        $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $item.Username,$password
-                
-                if(-not $script:sessionsHashTable.ContainsKey($item.ComputerName))
-                {                                   
-                    $sessionName = "Remotely" + (Get-Random).ToString()                                        
-
-                    $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $item.ComputerName -Credential $cred -Name $sessionName) -Credential $cred
-                    $script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)                    
-                }               
+                $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName)  
             }
-        }        
-    }
-    else
-    {
-        Write-Verbose "No machine configuration file found. Creating session to localhost."
-        CreateLocalSession
+            $script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
+        }               
     }
 }
 
 function CreateLocalSession
 {    
     param(
-    [Parameter(Position=0)] $machineName = 'localhost'
+        [Parameter(Position=0)] $Node = 'localhost'
     )
-     
-   #if(-not $script:sessionsHashTable.ContainsKey("localhost"))
-    if(-not $script:sessionsHashTable.ContainsKey($machineName))
-    {
-        $sessionName = "Remotely" + (Get-Random).ToString()
-        
-        $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $machineName -Name $sessionName)
 
-        $script:sessionsHashTable.Add($machineName, $sessionInfo)
+    if(-not $script:sessionsHashTable.ContainsKey($Node))
+    {
+        $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName)
+        $script:sessionsHashTable.Add($Node, $sessionInfo)
     } 
 }
 
 function CreateSessionInfo
 {
     param(
-        [Parameter(Position=0, Mandatory=$true)] [ValidateNotNullOrEmpty()] [System.Management.Automation.Runspaces.PSSession] $Session,
-        [System.Management.Automation.PSCredential] $Credential
-        )
+        [Parameter(Position=0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.Runspaces.PSSession] $Session,
 
-    return [PSCustomObject] @{ Session = $Session; Credential = $Credential }
+        [Parameter(Position=1)]
+        [pscredential] $Credential
+    )
+    return [PSCustomObject] @{ Session = $Session; Credential = $Credential}
 }
 
 function CheckAndReconnect
 {
-    param([Parameter(Position=0, Mandatory=$true)] [ValidateNotNullOrEmpty()] $sessionInfo)
+    param
+    (
+        [Parameter(Position=0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()] $sessionInfo
+    )
 
     if($sessionInfo.Session.State -ne [System.Management.Automation.Runspaces.RunspaceState]::Opened)
     {
         Write-Verbose "Unexpected session state: $sessionInfo.Session.State for machine $($sessionInfo.Session.ComputerName). Re-creating session" 
-        
-        if($sessionInfo.Session.ComputerName -ne "localhost")
+        if($sessionInfo.Session.ComputerName -ne 'localhost')
         {
-            $sessionInfo.Session = New-PSSession -ComputerName $sessionInfo.Session.ComputerName -Credential $sessionInfo.Credential
+            if ($sessionInfo.Credential)
+            {
+                $sessionInfo.Session = New-PSSession -ComputerName $sessionInfo.Session.ComputerName -Credential $sessionInfo.Credential
+            }
+            else
+            {
+                $sessionInfo.Session = New-PSSession -ComputerName $sessionInfo.Session.ComputerName
+            }
         }
         else
         {
@@ -250,6 +206,5 @@ function Get-RemoteSession
     {
         $sessions += $sessionInfo.Session
     }
-
     $sessions
 }

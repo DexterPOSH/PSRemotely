@@ -4,28 +4,7 @@ Executes a script block against a remote runspace. Remotely can be used with Pes
 
 Description
 ======================
-The contents on the Remotely block are executed on a remote runspace. The connection information of the runspace is supplied in a CSV file of the format:
-
-```
-ComputerName,Username,Password
-ComputerName1,Username1,Password1
-ComputerName2,Username2,Password2
-```
-
-The filename must be `machineConfig.csv`.
-
-The CSV file is expected to be placed next to this file. 
-
-If the CSV file is not found or username is not specified, the machine name is ignored and runspace to localhost
-is created for executing the script block.
-
-If the password has a ',' then it needs to be escaped by using quotes like: 
-
-```
-ComputerName,Username,Password
-ComputerName1,Username1,Password1
-ComputerName2,Username2,"Some,other,password"
-```
+The contents on the Remotely block are executed on a remote runspace. The connection information of the runspace is supplied using the -Nodes parameter or as the argument to the first positional parameter. By default, this assumes the local credentials have access to the remote session configuration on the target nodes. In case the credentials are different, you can use -CredentialHash to provide the node specific credentials.
 
 To get access to the streams, use GetVerbose, GetDebugOutput, GetError, GetProgressOutput,
 GetWarning on the resultant object.
@@ -35,19 +14,23 @@ Example
 Usage in Pester:
 
 ```powershell
+$CredHash = @{
+	'VM1' = (Get-Credential)
+}
+
 Describe "Add-Numbers" {
-    It "adds positive numbers" {
-        Remotely { 2 + 3 } | Should Be 5
+    It "adds positive numbers on two remote systems" {
+        Remotely 'VM1','VM2' { 2 + 3 } | Should Be 5
     }
 
     It "gets verbose message" {
-        $sum = Remotely { Write-Verbose -Verbose "Test Message" }
+        $sum = Remotely 'VM1','VM2' { Write-Verbose -Verbose "Test Message" }
         $sum.GetVerbose() | Should Be "Test Message"
     }
 
-    It "can pass parameters to remote block" {
+    It "can pass parameters to remote block with different credentials" {
         $num = 10
-        $process = Remotely { param($number) $number + 1 } -ArgumentList $num
+        $process = Remotely 'VM1' { param($number) $number + 1 } -ArgumentList $num -CredentialHash $CredHash
         $process | Should Be 11
     }
 }
