@@ -1,17 +1,18 @@
 ﻿# module variables
 # Path on the remotely nodes where the module are dropped along with tests files.
-$RemotelyNodePath = 'C:\temp\Remotely' 
+$Script:remotelyNodePath = 'C:\temp\Remotely' 
 # FullyQualified list of module names which are copied over to remotely nodes.
-$ModulesRequired = @(
-    @{ModuleName="Pester";RequiredVersion="3.3.5"}
+$Script:modulesRequired = @(
+    @{ModuleName="Pester";RequiredVersion="3.3.5"},
+    @{ModuleName='PoshSpec';RequiredVersion='1.2.2'}
 )
 
 #Get public and private function definition files.
-    $Public  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
-    $Private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
+    $public  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
+    $private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
 
 #Dot source the files
-    Foreach($import in @($Public + $Private))
+    Foreach($import in @($public + $private))
     {
         Try
         {

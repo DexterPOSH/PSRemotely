@@ -1,4 +1,4 @@
-Function Validate-ConfigData {
+Function Test-ConfigData {
 	[CmdletBinding()]
 	param(
 		[Parameter(Mandatory)]
@@ -40,7 +40,7 @@ Function Update-ConfigData {
 		[Hashtable]$ConfigurationData
 	)
 
-	if ($node['NodeName'] -eq '*') {
+	if ($configurationData.AllNodes.Where({$PSitem.NodeName -eq '*'})) {
 			$AllNodeSettings = $Node
 	}
 
@@ -54,12 +54,13 @@ Function Update-ConfigData {
 					if (-not $node.ContainsKey($nodeKey)) {
 						$node.Add($nodeKey, $AllNodeSettings[$nodeKey])
 					}
-					
 				}
 			}
 		}
 	}
 
 	# Remove the node named *
-	$ConfigurationData['AllNodes'] = @($ConfigurationData['AllNodes'] | Where-Object -FilterScript {$PSitem['NodeName'] -ne '*'})
+	$ConfigurationData['AllNodes'] = $ConfigurationData['AllNodes'] | Where-Object -Property 'NodeName' -ne '*'
+
+	Write-Output -InputObject $ConfigurationData
 }

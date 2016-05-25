@@ -1,5 +1,13 @@
-﻿
-Describe "Add-Numbers" {
+﻿$Verbose = @{}
+if($env:APPVEYOR_REPO_BRANCH -and $env:APPVEYOR_REPO_BRANCH -notlike "master")
+{
+    $Verbose.add("Verbose",$True)
+}
+
+$PSVersion = $PSVersionTable.PSVersion.Major
+Import-Module $PSScriptRoot\..\Remotely -Force
+
+Describe "Add-Numbers PS$PSVersion" {
    
     It "can execute script" {
             Remotely { 1 + 1 } | Should Be 2
@@ -115,4 +123,56 @@ Describe "Add-Numbers" {
         Clear-RemoteSession
         Get-PSSession -Name Remotely* | Should Be $null                
     }
+}
+
+InModuleScope -ModuleName Remotely {
+    Describe 'Remotely' -Tag UnitTest {
+        
+        Context  'Remotely with no configuration data' {
+            
+            #Arrange
+            Mock -CommandName Node -MockWith {}
+            #Act
+            Remotely {
+                Node 'localhost' {
+                    Describe 'DNStest' {
+                        
+                    }    
+                } 
+            } 
+            
+            # Assert
+            It 'Should straight ahead execute the Body scriptblock ' {
+                Assert-MockCalled -CommandName Node -times 1 -Exactly
+            }
+        }
+        
+        Context 'Remotely with Configuration data passed' {
+            # Arrange
+            $ConfigData = @{
+                AllNodes = @(
+                    {
+                        NodeName='localhost';
+                        Role = 'IIS'
+                    }
+                )
+            }
+            
+            # act
+            Remotely -ConfigurationData $ConfigData {
+                Node $AllNodes.NodeName {
+                    Describe 'DNStest' {
+                        $DNSService = Get-Service -name DNSServer
+                        
+                        It 'Should have DNSService' {
+                            $DNSService | Should Not BeNullOrEmpty
+                        }
+                    }
+                }
+            }
+            
+            # Assert
+            
+        }  
+    }    
 }

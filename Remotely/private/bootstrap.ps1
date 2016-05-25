@@ -5,40 +5,68 @@ Function BootstrapRemotelyNode {
         [System.Management.Automation.Runspaces.PSSession]$session,
         
         [Parameter(Mandatory)]
-        [Microsoft.PowerShell.Commands.ModuleSpecification[]]$FullyQualifiedName
+        [Microsoft.PowerShell.Commands.ModuleSpecification[]]$FullyQualifiedName,
+
+		[Parameter()]
+		[String]$remotelyNodePath
     )
         
-    foreach ($module in $FullyQualifiedName) {
+	$ModuleStatus, $pathStatus = TestRemotelyNode @PSBoundParameters
+    foreach ($hash in $moduleStatus.GetEnumerator()) {
 
-        if ( -not (TestRemotelyNodeModule -session $Session -FullyQualifiedName $module)) {
-            TRY {
-                CopyRemotelyNodeModule -session $Session -FullyQualifiedName $module -ErrorAction Stop
-            }
-            CATCH {
-                # log error
-                $PSCmdlet.ThrowTerminatingError($PSItem)
-            }
-        }
-    }
+		if ($hash.Value) {
+			# module present on the remote node
+		}
+		else {
+			# module not present on the remote node
+			CopyRemotelyNodeModule -Session $session -FullyQualifiedName $($FullyQualifiedName | Where -Property Name -EQ $hash.Value)
+		}
+	}
+	
+	if ($pathStatus) {
+		# remotely node path created
+	}
+	else {
+		CreateRemotelyNodePath	-session $session -Path $remotelyNodePath
+	}
 }
 
-Function TestRemotelyNodeModule {
+Function TestRemotelyNode {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [System.Management.Automation.Runspaces.PSSession]$session,
         
         [Parameter(Mandatory)]
-        [Microsoft.PowerShell.Commands.ModuleSpecification]$FullyQualifiedName
+        [Microsoft.PowerShell.Commands.ModuleSpecification[]]$FullyQualifiedName,
+
+		[Parameter()]
+		[String]$remotelyNodePath
     )
     
-    $moduleThere = Invoke-Command -Session $Session -ScriptBlock {Get-Module -ListAvailable -Name $Using:FullyQualifiedName.Name} 
-    if (-Not $moduleThere) {
-        $false # write False
-    }
-    else {
-        $true # write True
-    }
+    $nodeStatus = Invoke-Command -Session $session -ArgumentList $FullyQualifiedName, $session -ScriptBlock {
+						param(
+							$FullyQualifiedName,
+							$remotelyNodePath
+						)
+						$outputHash = @{}
+						foreach($module in $FullyQualifiedName) {
+							if(Get-Module -FullyQualifiedName $module) {
+								# module present
+								$outputHash.Add($module.Name, $true)
+							}
+							else {
+								$outputHash.Add($module.Name, $false)	
+							}
+						}
+						
+						if (Test-Path -path $remotelyNodePath -PathType Conatiner) {
+							$outputHash,$true
+						}
+						else {
+							$outputHash, $false
+						}
+					} 
 }
 
 Function CreateRemotelyNodePath {
@@ -50,10 +78,7 @@ Function CreateRemotelyNodePath {
         [Parameter()]
         [String]$Path
     )
-    $pathPresent = Invoke-Command -Session $session -ScriptBlock {Test-Path -Path $using:Path}
-    if (-not $pathPresent) {
-        Invoke-Command -Session $session -ScriptBlock {$null = New-Item -Path $using:Path -ItemType Directory -Force}
-    }
+    Invoke-Command -Session $session -ScriptBlock {$null = New-Item -Path $using:Path -ItemType Directory -Force}
 }
 
 Function CopyRemotelyNodeModule {
@@ -65,8 +90,9 @@ Function CopyRemotelyNodeModule {
         [Parameter(Mandatory)]
         [Microsoft.PowerShell.Commands.ModuleSpecification]$FullyQualifiedName)
 
-    $moduleLocalInfo = Get-Module -ListAvailable -Name $FullyQualifiedName.Name
-    $ModuleName = $FullyQualifiedName.Name
+    $moduleLocalInfo = Get-Module -ListAvailable -FullyQualifiedName $FullyQualifiedName
+    $moduleName = $FullyQualifiedName.Name
+	$moduleVersion = $FullyQualifiedName.RequiredVersion.ToString()
     
     if (-Not $moduleLocalInfo) {
         Write-Warning -Message "$FullyQualifiedName not found locally. Trying to download it from PowerShell gallery."
@@ -93,10 +119,7 @@ Function CopyRemotelyNodeModule {
     # now copy the module to the remote node
     TRY {
         $modulePath  = Split-Path -Path $moduleLocalInfo.path  -Parent
-        CreateRemotelyNodePath -session $session -Path "$RemotelyNodePath\$ModuleName" -ErrorAction Stop
-        # TO DO check if the zip already exists before copying
-        #Copy-Item -Path $ZipLocalPath -Destination $RemotelyNodePath -ToSession $session -Force -ErrorAction Stop
-        CopyModuleFolderToRemotelyNode -path "$modulePath\*" -Destination "$RemotelyNodePath\$ModuleName" -session $session -ErrorAction Stop
+        CopyModuleFolderToRemotelyNode -path "$modulePath\*" -Destination "$env:ProgramFiles\WindowsPowerShell\Modules\$ModuleName\$moduleVersion" -session $session -ErrorAction Stop
     }
     CATCH {
         $PSCmdlet.ThrowTerminatingError($PSitem)
