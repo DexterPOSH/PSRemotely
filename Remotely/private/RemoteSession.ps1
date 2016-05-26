@@ -43,34 +43,63 @@ function AddArgumentListtoSessionVars {
 
 function CreateSessions
 {
+	[CmdletBinding(DefaultParameterSetName='Computername')]
     param
     (
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName='ComputerName')]
         [string[]] $Nodes,
 
         [Parameter()]
         $CredentialHash,
 
 		[Parameter()]
-		[hashtable]$ArgumentList
+		[hashtable]$ArgumentList,
+
+		[Parameter(ParameterSetName='ConfigurationData')]
+		[HashTable]$ConfigData
     )
-    $PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList           
-    foreach($Node in $Nodes)
-    { 
-        if(-not $script:sessionsHashTable.ContainsKey($Node))
-        {                                   
-            $sessionName = "Remotely-" + $Node                              
-            if ($CredentialHash -and $CredentialHash[$Node])
-            {
-                $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
-            }
-            else
-            {
-                $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
-            }
-            $script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
-        }               
-    }
+	
+	Switch -Exact ($PSCmdlet.ParameterSetName) {
+		'ComputerName' {
+			$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList           
+			foreach($Node in $Nodes)
+			{ 
+				if(-not $script:sessionsHashTable.ContainsKey($Node))
+				{                                   
+					$sessionName = "Remotely-" + $Node                              
+					if ($CredentialHash -and $CredentialHash[$Node])
+					{
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
+					}
+					else
+					{
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
+					}
+					$script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
+				}               
+			}
+		}
+		'ConfigurationData' {
+			foreach ($node in $ConfigData.AllNodes) {
+				$ArgumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
+				$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList           
+				if(-not $script:sessionsHashTable.ContainsKey($Node.NodeName))
+				{                                   
+					$sessionName = "Remotely-" + $Node.NodeName                              
+					if ($CredentialHash -and $CredentialHash[$Node.NodeName])
+					{
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
+					}
+					else
+					{
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)  
+					}
+					$script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
+				}
+			}
+		}
+	}
+    
 }
 
 function CreateLocalSession

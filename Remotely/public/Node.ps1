@@ -16,7 +16,6 @@ Function Node {
 			foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
 			{
 				$sessions += $sessionInfo.Session
-				AddArgumentListtoSessionVars -Session $SessionInfo.Session # Do this every time Node is called, since this might change
 			}
 		}
 		else {
@@ -36,9 +35,7 @@ Function Node {
 				foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
 				{
 					$sessions += $sessionInfo.Session
-					AddArgumentListtoSessionVars -Session $SessionInfo.Session # Do this every time Node is called, since this might change
 				}
-
 			}
 		}
 		

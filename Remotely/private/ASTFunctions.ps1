@@ -1,11 +1,20 @@
+Function GetASTFromInput {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory)]$Content
+	)
+	$AST = [System.Management.Automation.Language.Parser]::ParseInput($Content,[ref]$null,[ref]$Null)
+	return $AST
+}
+
 Function Get-TestName {
 	[OutputType([String])]
 	param(
 		[Parameter()]
 		[String]$Content
 	)
-	$AST = [System.Management.Automation.Language.Parser]::ParseInput($Content,[ref]$null,[ref]$Null)
-
+	
+	$Ast = Get-ASTFromInput -Content $Content
 	$CommandAST = $AST.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst]}, $true)    
 
 	$DescribeAST = $CommandAST | Where-Object -FilterScript {$PSItem.GetCommandName() -eq 'Describe'}

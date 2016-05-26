@@ -20,3 +20,52 @@ Describe "Add-Numbers" {
         $process | Should Be 11
     }
 }
+
+$ConfigurationData = @{
+	AllNodes = @(
+		{
+			NodeName='*';
+			FQDN='Lajolla.lab';
+			DNSServer=@('192.168.10.1','192.168.10.2')
+
+		},
+		{
+			NodeName='DellBlr2C2A';
+			MgmtIPAddress = '192.168.10.11';
+			Storage1IPAddress = '192.168.40.11';
+			Storage2IPAddress = '192.168.50.11';
+			Type='Compute';
+
+		},
+		{
+			NodeName='DellBlr2S1';
+			Storage1IPAddress = '192.168.40.21';
+			Storage2IPAddress = '192.168.50.21';
+			Type='Storage';
+		}
+	)
+}
+
+Remotely ComputeNodeTest -ConfigurationData $ConfigurationData {
+	Node $AllNodes.NodeName.Where({$PSitem.Type -eq 'Compute'}) {
+		
+		Describe "TestDNSConnectivity" -tag DNS {
+	
+			Context 'DNS Reachable over Mgmt network' {
+
+				$Node.DNSServer.Foreach({
+						TCPPortWithSourceAddress $PSItem 53 -SourceIP $node.MgmtIPAddress { Should Be $true }
+					})
+			}
+
+			Context 'DNS resolves the FQDN' {
+				$Node.DNSServer.Foreach({
+						DNSHost $node.FQDN { Should NOT Be $null }
+					})
+			}
+				
+		}
+	}
+}
+	
+
