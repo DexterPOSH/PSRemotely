@@ -19,7 +19,7 @@ Function BootstrapRemotelyNode {
 		}
 		else {
 			# module not present on the remote node
-			CopyRemotelyNodeModule -Session $session -FullyQualifiedName $($FullyQualifiedName | Where -Property Name -EQ $hash.Value)
+			CopyRemotelyNodeModule -Session $session -FullyQualifiedName $($FullyQualifiedName | Where -Property Name -EQ $hash.Name)
 		}
 	}
 	
@@ -44,29 +44,29 @@ Function TestRemotelyNode {
 		[String]$remotelyNodePath
     )
     
-    $nodeStatus = Invoke-Command -Session $session -ArgumentList $FullyQualifiedName, $session -ScriptBlock {
-						param(
-							$FullyQualifiedName,
-							$remotelyNodePath
-						)
-						$outputHash = @{}
-						foreach($module in $FullyQualifiedName) {
-							if(Get-Module -FullyQualifiedName $module) {
-								# module present
-								$outputHash.Add($module.Name, $true)
-							}
-							else {
-								$outputHash.Add($module.Name, $false)	
-							}
-						}
+    Invoke-Command -Session $session -ArgumentList $FullyQualifiedName, $session -ScriptBlock {
+		param(
+			$FullyQualifiedName,
+			$remotelyNodePath
+		)
+		$outputHash = @{}
+		foreach($module in $FullyQualifiedName) {
+			if(Get-Module -FullyQualifiedName $module -ListAvailable) {
+				# module present
+				$outputHash.Add($module.Name, $true)
+			}
+			else {
+				$outputHash.Add($module.Name, $false)	
+			}
+		}
 						
-						if (Test-Path -path $remotelyNodePath -PathType Conatiner) {
-							$outputHash,$true
-						}
-						else {
-							$outputHash, $false
-						}
-					} 
+		if (Test-Path -path $remotelyNodePath -PathType Container) {
+			$outputHash,$true
+		}
+		else {
+			$outputHash, $false
+		}
+	} 
 }
 
 Function CreateRemotelyNodePath {

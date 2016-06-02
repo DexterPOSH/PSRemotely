@@ -8,9 +8,7 @@ function Remotely
 
 		# DSC style configuration data , follows the same syntax
 		[Parameter(Position = 1)]
-        [hashtable] $configurationData=@{
-			AllNodes=@()
-		},
+        [hashtable] $configurationData,
 		
 		# Key-Value pairs corresponding to variable-value which are passed to the remotely node.
         [Parameter(Mandatory = $false, Position = 2)]
@@ -18,7 +16,7 @@ function Remotely
 
 		# Credentials in the node name - PSCredential Object (key-Value) pair.
         [Parameter(Mandatory = $false, Position = 3)]
-        $credentialHash = @{}
+		[hashtable]$credentialHash
     )
 	BEGIN {
 		# Add CredentialHash & ArgumentList in Script scope
@@ -49,7 +47,7 @@ function Remotely
 			CreateSessions -Nodes $Script:AllNodes.NodeName -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
 
 			$sessions = @()
-			if( $script:sessionsHashTable.Values.GetEnumerator().Count -le 0) {
+			if( $script:sessionsHashTable.Values.Count -le 0) {
 				throw 'No sessions created'
 			}
 			else {
@@ -62,7 +60,7 @@ function Remotely
 					}
 					else {
 						# run the bootstrap function
-						BootstrapRemotelyNode -Session $sessionInfo.Session
+						BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Script:modulesRequired
 					}
 				}
 			}

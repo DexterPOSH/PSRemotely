@@ -21,6 +21,23 @@ Describe "Add-Numbers" {
     }
 }
 
+Remotely {
+	Node localhost {
+		Describe 'Bits Service test' {
+			
+			$BitsService = Get-Service -Name Bits
+			
+			It "Should have a service named bits" {
+				$BitsService | Should Not BeNullOrEmpty
+			}
+			
+			it 'Should be running' {
+				$BitsService.Status | Should be 'Running'
+			}
+		}		
+	}
+}
+
 $ConfigurationData = @{
 	AllNodes = @(
 		{
@@ -46,10 +63,10 @@ $ConfigurationData = @{
 	)
 }
 
-Remotely ComputeNodeTest -ConfigurationData $ConfigurationData {
+Remotely 'ComputeNodeTest' -ConfigurationData $ConfigurationData {
 	Node $AllNodes.NodeName.Where({$PSitem.Type -eq 'Compute'}) {
-		
-		Describe "TestDNSConnectivity" -tag DNS {
+		#region DNS test
+		Describe "TestDNSConnectivity" -Tags DNS {
 	
 			Context 'DNS Reachable over Mgmt network' {
 
@@ -60,12 +77,73 @@ Remotely ComputeNodeTest -ConfigurationData $ConfigurationData {
 
 			Context 'DNS resolves the FQDN' {
 				$Node.DNSServer.Foreach({
-						DNSHost $node.FQDN { Should NOT Be $null }
+						# DNSHost <Name to Resolve> <DNSServer to user> <Assertion> <type of Name query>
+						DNSHost $node.FQDN $PSitem { Should NOT Be $null }
 					})
 			}
 				
+		} #end Describe TestDNSConnectivity
+		
+		#endregion
+		
+		
+		#region AD test
+		Describe 'TestADConnectivity' -Tags AD {
+			
+			Context 'AD reachable over Mgmt network' {
+				TCPPortWithSourceAddress $Node.FQDN 389 -SourceIP $node.MgmtIPAddress { Should Be $true }	
+			}	
 		}
+		#endregion
+		
+		#region IP connectivity test
+		Describe 'TestIPConnectivity' -Tags IP {
+			
+		}
+		#endregion
 	}
 }
-	
 
+
+Remotely 'StorageNodeTest' -ConfigurationData $ConfigurationData {
+	Node $AllNodes.NodeName.Where({$PSitem.Type -eq 'Storage'}) {
+		#region DNS test
+		Describe "TestDNSConnectivity" -Tags DNS {
+	
+			Context 'DNS Reachable over Storage1 network' {
+
+				$Node.DNSServer.Foreach({
+						TCPPortWithSourceAddress $PSItem 53 -SourceIP $node.Storage1IPAddress { Should Be $true }
+					})
+			}
+			
+			Context 'DNS Reachable over Storage2 network' {
+
+				$Node.DNSServer.Foreach({
+						TCPPortWithSourceAddress $PSItem 53 -SourceIP $node.Storage2IPAddress { Should Be $true }
+					})
+			}
+
+			Context 'DNS resolves the FQDN' {
+				$Node.DNSServer.Foreach({
+						# DNSHost <Name to Resolve> <DNSServer to user> <Assertion> <type of Name query>
+						DNSHost $node.FQDN $PSitem { Should NOT Be $null }
+					})
+			}
+				
+		} #end Describe TestDNSConnectivity
+		
+		#region AD test
+		Describe 'TestADConnectivity' -Tags AD {
+			
+			Context 'AD reachable over Storage1 network' {
+				TCPPortWithSourceAddress $Node.FQDN 389  $node.Storage1IPAddress { Should Be $true }	
+			}
+			
+			Context 'AD reachable over Storage2 network' {
+				TCPPortWithSourceAddress $Node.FQDN 389  $node.Storage2IPAddress { Should Be $true }	
+			}	
+		}
+		#endregion
+		
+	}

@@ -1,4 +1,4 @@
-Function GetASTFromInput {
+Function Get-ASTFromInput {
 	[CmdletBinding()]
 	param(
 		[Parameter(Mandatory)]$Content

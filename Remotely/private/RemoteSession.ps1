@@ -58,10 +58,15 @@ function CreateSessions
 		[Parameter(ParameterSetName='ConfigurationData')]
 		[HashTable]$ConfigData
     )
-	
+	if ($argumenList) {
+		$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList  -NoMachineProfile         
+	}
+	else {
+		$PSSessionOption = New-PSSessionOption  -NoMachineProfile 
+	}
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
 		'ComputerName' {
-			$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList           
+			
 			foreach($Node in $Nodes)
 			{ 
 				if(-not $script:sessionsHashTable.ContainsKey($Node))
@@ -78,11 +83,11 @@ function CreateSessions
 					$script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}               
 			}
+			break
 		}
 		'ConfigurationData' {
 			foreach ($node in $ConfigData.AllNodes) {
 				$ArgumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
-				$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList           
 				if(-not $script:sessionsHashTable.ContainsKey($Node.NodeName))
 				{                                   
 					$sessionName = "Remotely-" + $Node.NodeName                              
@@ -97,6 +102,7 @@ function CreateSessions
 					$script:sessionsHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}
 			}
+			break
 		}
 	}
     

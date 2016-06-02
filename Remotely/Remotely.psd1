@@ -25,7 +25,7 @@ Description = 'Remotely provides a framework to execute script blocks on a remot
 PowerShellVersion = '2.0'
 
 # Functions to export from this module
-FunctionsToExport = @('Remotely', 'Clear-RemoteSession', 'Get-RemoteSession')
+FunctionsToExport = '*'
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'

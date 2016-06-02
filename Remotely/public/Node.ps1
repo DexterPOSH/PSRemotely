@@ -21,6 +21,7 @@ Function Node {
 		else {
 			# this might mean that the Configuration data was never supplied
 			# Check if the AllNodes Script var is present is not null
+			New-Variable -Name remotelyNodeMap -Value @{} -Scope Script # Create a hashtable which will contain the bootstrap status
 			if(-not $Script:AllNodes) {
 				$script:sessionsHashTable = @{}
 				# this means the session creation has to be done here
@@ -32,9 +33,23 @@ Function Node {
 					$createSessionParam.Add('ArgumentList', $Script:ArgumentList)
 				}
 				CreateSessions @createSessionParam
-				foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
-				{
-					$sessions += $sessionInfo.Session
+				$sessions = @()
+				if( $script:sessionsHashTable.Values.count -le 0) {
+					throw 'No sessions created'
+				}
+				else {
+					foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
+					{
+						CheckAndReConnect -sessionInfo $sessionInfo
+						$sessions += $sessionInfo.Session
+						if($Script:remotelyNodeMap.ContainsKey($($SessionInfo.Session.ComputerName))) {
+							# In memory Node map, has the node marked as bootstrapped
+						}
+						else {
+							# run the bootstrap function
+							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Script:modulesRequired
+						}
+					}
 				}
 			}
 		}
@@ -67,8 +82,21 @@ Function Node {
 				$testFile = "$remotelyNodePath\$testFileName"
 				$outPutFile = "{0}\{1}.{2}.xml" -f 	 $remotelyNodePath, $name, $testName
 				Set-Content -Path $testFile -Value $testBlock	-Force
+				$pesterParams = @{}
+				if ($Script) {
+					$pesterParams.Add('Script',$Script)
+				}
+				if ($testName) {
+					$pesterParams.Add('TestName',$testName)
+				}
 				# TODO check if Pester arguments are populated in as variables and use them there
-                Invoke-Pester -Script $testFile -Tag $tags -Quiet -OutputFormat NUnit -OutputFile $outPutFile
+				if($pesterParams.Count -ge 1) {
+					Invoke-Pester @pesterParams -PassThru -Tag $tags -Quiet -OutputFormat NUnit -OutputFile $outPutFile
+				}
+				else {
+					Invoke-Pester -Script $testFile -Tag $tags -PassThru -Quiet -OutputFormat NUnit -OutputFile $outPutFile
+				}
+                
 			} -ArgumentList $Script:modulesRequired, $Script:remotelyNodePath, $testFileName , $nodeName, $testName -AsJob 
 		}
 	}
@@ -78,12 +106,10 @@ Function Node {
 
 		foreach($childJob in $testjob.ChildJobs)
 		{
-			if($childJob.Output.Count -eq 0)
-			{
+			if($childJob.Output.Count -eq 0){
 				[object] $outputStream = New-Object psobject
 			}
-			else
-			{
+			else {
 				[object] $outputStream = $childJob.Output | % { $_ }
 			}
 
@@ -109,8 +135,7 @@ Function Node {
 			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetWarning -Value { return $this.__Streams.Warning }
 			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name RemotelyTarget -Value $childJob.Location
 
-			if($childJob.State -eq 'Failed')
-			{
+			if($childJob.State -eq 'Failed'){
 				$childJob | Receive-Job -ErrorAction SilentlyContinue -ErrorVariable jobError
 				$outputStream.__Streams.Error = $jobError
 			}
@@ -119,7 +144,17 @@ Function Node {
 		}
 
     $testjob | Remove-Job -Force
-    $results
+    
+		# Create the Object here as per the guideline
+		# iterate over each result object and generate the new customobject for each
+		foreach($result in $results) {
+			$output = [PsCustomObject]@{
+						NodeName=$result.RemotelyTarget
+						Tests=@()
+					}
+			
+		}
+
 	}
 
 
