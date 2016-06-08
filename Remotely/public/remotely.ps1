@@ -1,5 +1,6 @@
 function Remotely
 {
+	[CmdletBinding(DefaultParameterSetName='ConfigurationData')]
     param 
     (       
         # The body script block.
@@ -7,9 +8,16 @@ function Remotely
         [ScriptBlock] $body,
 
 		# DSC style configuration data , follows the same syntax
-		[Parameter(Position = 1)]
+		[Parameter(Position = 1,
+					ParameterSetName='ConfigurationData')]
         [hashtable] $configurationData,
 		
+		# Specify the path to a file (.json or .psd1) which houses the configuration data
+		[Parameter(Position=2, ParameterSetName='ConfigDataFromFile')]
+		[ValidateScript({ '.json','.psd1'  -contains $([System.IO.Path]::GetExtension($_))})] 
+		[ValidateScript({Test-Path -Path $_})]
+		$Path
+
 		# Key-Value pairs corresponding to variable-value which are passed to the remotely node.
         [Parameter(Mandatory = $false, Position = 2)]
         [Hashtable]$argumentList,
@@ -28,6 +36,16 @@ function Remotely
 		Set-Variable -Name ArgumentList  -Scope  Script
 	}
 	
+	Switch -Exact ($PSCmdlet.ParameterSetName) {
+		'ConfigurationData' {
+			
+			break
+		}
+		'ConfigDataFromFile' {
+			
+			break
+		}
+	}
 	#region create the PSSessions & bootstrap nodes	  
 	if ($ConfigurationData) {
 		# validate the config data
