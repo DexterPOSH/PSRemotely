@@ -64,3 +64,66 @@ Function Update-ConfigData {
 
 	Write-Output -InputObject $ConfigurationData
 }
+
+# http://powershell.org/forums/topic/configuration-data-for-dsc-not-in-json/
+Function LoadConfigDataFromFile {
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$True)]
+		[String]$Path
+	)
+
+	Switch -Exact ([System.IO.Path]::GetExtension($Path)) {
+		'.json' {
+			$object = ConvertFrom-Json -InputObject $(Get-Content -Raw -Path $Path) 
+			$hashTable = ConvertPSObjectToHashtable -InputObject $Object 
+			Write-Output -InputObject $hashTable
+			break
+		}
+		'.psd1' {
+			$hashTable = Import-LocalizedData -Path $Path
+			Write-Output -InputObject $hashTable
+		}
+		default {
+			throw 'specifying only a .json or .psd1 file for configdata supported'			
+		}
+	}
+}
+
+# Credits : Dave Wyatt's function here -> http://powershell.org/forums/topic/configuration-data-for-dsc-not-in-json/
+function ConvertPSObjectToHashtable
+{
+    param (
+        [Parameter(ValueFromPipeline)]
+        $InputObject
+    )
+
+    process
+    {
+        if ($null -eq $InputObject) { return $null }
+
+        if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string])
+        {
+            $collection = @(
+                foreach ($object in $InputObject) { ConvertPSObjectToHashtable $object }
+            )
+
+            Write-Output -NoEnumerate $collection
+        }
+        elseif ($InputObject -is [psobject])
+        {
+            $hash = @{}
+
+            foreach ($property in $InputObject.PSObject.Properties)
+            {
+                $hash[$property.Name] = ConvertPSObjectToHashtable $property.Value
+            }
+
+            $hash
+        }
+        else
+        {
+            $InputObject
+        }
+    }
+}
