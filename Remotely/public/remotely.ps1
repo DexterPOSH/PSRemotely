@@ -45,6 +45,7 @@ function Remotely
 			break
 		}
 	}
+	}
 	#region create the PSSessions & bootstrap nodes	  
 	if ($ConfigurationData) {
 		# validate the config data
