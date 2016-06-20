@@ -44,14 +44,14 @@ Function TestRemotelyNode {
 		[String]$remotelyNodePath
     )
     
-    Invoke-Command -Session $session -ArgumentList $FullyQualifiedName, $session -ScriptBlock {
+    Invoke-Command -Session $session -ArgumentList $FullyQualifiedName,$remotelyNodePath -ScriptBlock {
 		param(
 			$FullyQualifiedName,
 			$remotelyNodePath
 		)
 		$outputHash = @{}
 		foreach($module in $FullyQualifiedName) {
-			if(Get-Module -FullyQualifiedName $module -ListAvailable) {
+			if(Get-Module -FullyQualifiedName @{ModuleName=$module.Name; ModuleVersion=$module.version} -ListAvailable) {
 				# module present
 				$outputHash.Add($module.Name, $true)
 			}
@@ -81,6 +81,17 @@ Function CreateRemotelyNodePath {
     Invoke-Command -Session $session -ScriptBlock {$null = New-Item -Path $using:Path -ItemType Directory -Force}
 }
 
+Function TestModulePresentInLib {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [Microsoft.PowerShell.Commands.ModuleSpecification]$FullyQualifiedName
+    )
+    $LibPath  = Resolve-Path -Path $PSScriptRoot\..\lib | Select-Object -ExpandProperty Path
+    $ModulePath = '{1}_{2}' -f $PSScriptRoot, $FullyQualifiedName.Name, $FullyQualifiedName.Version
+    Test-Path -Path "$libPath\$modulePath" -ErrorAction Stop 
+}
+
 Function CopyRemotelyNodeModule {
     [CmdletBinding()]
     param(
@@ -90,41 +101,24 @@ Function CopyRemotelyNodeModule {
         [Parameter(Mandatory)]
         [Microsoft.PowerShell.Commands.ModuleSpecification]$FullyQualifiedName)
 
-    $moduleLocalInfo = Get-Module -ListAvailable -FullyQualifiedName $FullyQualifiedName
+    # copy the modules from the lib directory
     $moduleName = $FullyQualifiedName.Name
-	$moduleVersion = $FullyQualifiedName.RequiredVersion.ToString()
+    $moduleVersion = $FullyQualifiedName.Version
     
-    if (-Not $moduleLocalInfo) {
-        Write-Warning -Message "$FullyQualifiedName not found locally. Trying to download it from PowerShell gallery."
-        # TODO Add a Confirm dialog here ?
-        TRY {
-            # try to fetch it from PowerShell gallery
-            Import-Module -Name PackageManagement -ErrorAction Stop
-            if ($FullyQualifiedName.RequiredVersion) {
-                Install-Module -Name $FullyQualifiedName.Name -RequiredVersion $FullyQualifiedName.RequiredVersion -ErrorAction Stop
-            }
-            else {
-                Install-Module -Name $FullyQualifiedName.Name -RequiredVersion $FullyQualifiedName.Version -ErrorAction Stop
-            }
-            $moduleLocalInfo = Get-Module -ListAvailable -Name $ModuleName
-            if (-not $moduleLocalInfo) {
-                throw "$FullyQualifiedName is not installed."
-            }
-        }
-        CATCH {
-            Write-Warning -Message $PSItem.Exception
-            throw "$FullyQualifiedName is not installed."
-        }
-    }
     # now copy the module to the remote node
     TRY {
-        $modulePath  = Split-Path -Path $moduleLocalInfo.path  -Parent
-        CopyModuleFolderToRemotelyNode -path "$modulePath\*" -Destination "$env:ProgramFiles\WindowsPowerShell\Modules\$ModuleName\$moduleVersion" -session $session -ErrorAction Stop
+        if (testModulePresentInLib -FullyQualifiedName $FullyQualifiedName) {
+            $LibPath  = Resolve-Path -Path $PSScriptRoot\..\lib | Select-Object -ExpandProperty Path
+            CopyModuleFolderToRemotelyNode -path "$LibPath\$moduleName*\*" -Destination "$Script:remotelyNodePath\$moduleName" -session $session -ErrorAction Stop
+        }
+        else {
+            throw "Lib folder does not have a folder named $($moduleName)_$($moduleVersion), so it can't be copied to the remotely node."
+        }
+        
     }
     CATCH {
         $PSCmdlet.ThrowTerminatingError($PSitem)
     }
-    
 }
 
 Function CopyModuleFolderToRemotelyNode {
