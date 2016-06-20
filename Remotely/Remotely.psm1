@@ -1,12 +1,13 @@
 ﻿# module variables
-# Path on the remotely nodes where the module are dropped along with tests files.
-$Script:remotelyNodePath = 'C:\temp\Remotely' 
-# FullyQualified list of module names which are copied over to remotely nodes.
-$Script:modulesRequired = @(
-    @{ModuleName="Pester";RequiredVersion="3.3.5"},
-    @{ModuleName='PoshSpec';RequiredVersion='1.2.2'}
-)
-
+$Remotely = @{
+    remotelyNodePath = 'C:\temp\Remotely';
+    modulesRequired = @(
+        @{ModuleName="Pester";ModuleVersion="3.3.14"},
+        @{ModuleName='PoshSpec';ModuleVersion='2.1.6'}
+    )
+    NodeMap = @()
+    sessionHashTable = @{}
+}
 #Get public and private function definition files.
     $public  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
     $private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
@@ -29,4 +30,4 @@ $Script:modulesRequired = @(
     # Export Public functions ($Public.BaseName) for WIP modules
     # Set variables visible to the module and its functions only
 
-Export-ModuleMember -Function $Public.Basename
+Export-ModuleMember -Function $Public.Basename -Variable Remotely

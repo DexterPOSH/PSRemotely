@@ -12,8 +12,9 @@ Function Node {
 
     )
 	BEGIN {
-		if($script:sessionsHashTable) {
-			foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
+		if($Remotely.sessionHashTable.Count -ne 0) {
+			$sessions = @()
+			foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
 			{
 				$sessions += $sessionInfo.Session
 			}
@@ -21,33 +22,22 @@ Function Node {
 		else {
 			# this might mean that the Configuration data was never supplied
 			# Check if the AllNodes Script var is present is not null
-			New-Variable -Name remotelyNodeMap -Value @{} -Scope Script # Create a hashtable which will contain the bootstrap status
 			if(-not $Script:AllNodes) {
-				$script:sessionsHashTable = @{}
-				# this means the session creation has to be done here
-				$createSessionParam = @{Nodes=$name}
-				if($Script:CredentialHash) {
-					$createSessionParam.Add('CredentialHash', $Script:CredentialHash)
-				}
-				if($Script:ArgumentList) {
-					$createSessionParam.Add('ArgumentList', $Script:ArgumentList)
-				}
-				CreateSessions @createSessionParam
-				$sessions = @()
-				if( $script:sessionsHashTable.Values.count -le 0) {
+				
+				CreateSessions -Nodes $Name  -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+				if( $Remotely.sessionHashTable.Values.count -le 0) {
 					throw 'No sessions created'
 				}
 				else {
-					foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
+					foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
 					{
 						CheckAndReConnect -sessionInfo $sessionInfo
-						$sessions += $sessionInfo.Session
-						if($Script:remotelyNodeMap.ContainsKey($($SessionInfo.Session.ComputerName))) {
+						if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
 							# In memory Node map, has the node marked as bootstrapped
 						}
 						else {
 							# run the bootstrap function
-							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Script:modulesRequired
+							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
 						}
 					}
 				}
