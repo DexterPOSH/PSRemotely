@@ -65,7 +65,7 @@ function CreateSessions
 		$PSSessionOption = New-PSSessionOption  -NoMachineProfile 
 	}
 	# try to see if there are already open PSSessions
-	$existingPSSession = @(Get-PSSession -Name Remotely* | Where -Property State -eq 'Opened')
+	$existingPSSessions = @(Get-PSSession -Name Remotely* | Where -Property State -eq 'Opened')
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
 		'ComputerName' {
 			
@@ -73,14 +73,18 @@ function CreateSessions
 			{ 
 				if(-not $Remotely.SessionHashTable.ContainsKey($Node))
 				{                                   
-					$sessionName = "Remotely-" + $Node                              
-					if ($CredentialHash -and $CredentialHash[$Node])
-					{
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
+					$sessionName = "Remotely-" + $Node 
+					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName                          
+					if ($existingPSSession) {
+						$sessionInfo = CreateSessionInfo -Session $existingPSSession	
 					}
-					else
-					{
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
+					else {
+						if ($CredentialHash -and $CredentialHash[$Node]) {
+							$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
+						}
+						else {
+							$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
+						}
 					}
 					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}               

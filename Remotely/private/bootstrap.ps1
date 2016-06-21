@@ -32,7 +32,7 @@ Function TestRemotelyNodeBootStrapped {
         $SessionInfo
     )
     if ($Remotely.NodeMap.Count -gt 0) {
-        if($Remotely.NodeMap.ContainsKey($($SessionInfo.Session.ComputerName))) {
+        if($Remotely.NodeMap.NodeName -contains $($SessionInfo.Session.ComputerName)) {
             $True
         }
         else {
@@ -61,28 +61,35 @@ Function BootstrapRemotelyNode {
     # Add the above information to the Remotely var
     UpdateRemotelyNodeMap -ModuleStatus $ModuleStatus -PathStatus $PathStatus -NodeName $session.ComputerName
 
-    foreach ($hash in $moduleStatus.GetEnumerator()) {
+    if ($pathStatus -and $($moduleStatus.Values -notcontains $False)) {
+        # Node is already bootstrapped, no need to take action
+    }
+    else {
+        # Node is missing some of the configs, bootstrap it
+        foreach ($hash in $moduleStatus.GetEnumerator()) {
 
 		if ($hash.Value) {
-			# module present on the remote node
-		}
-		else {
-			# module not present on the remote node
-			CopyRemotelyNodeModule -Session $session -FullyQualifiedName $($FullyQualifiedName | Where -Property Name -EQ $hash.Name)
-		}
-	}
-	
-	if ($pathStatus) {
-		# remotely node path created
-	}
-	else {
-		CreateRemotelyNodePath	-session $session -Path $remotelyNodePath
-	}
+                # module present on the remote node
+            }
+            else {
+                # module not present on the remote node
+                CopyRemotelyNodeModule -Session $session -FullyQualifiedName $($FullyQualifiedName | Where -Property Name -EQ $hash.Name)
+            }
+        }
+        
+        if ($pathStatus) {
+            # remotely node path created
+        }
+        else {
+            CreateRemotelyNodePath	-session $session -Path $remotelyNodePath
+        }
 
-    # at the end update the status of the node
-    $ModuleStatus, $pathStatus = TestRemotelyNode @PSBoundParameters
-    # Add the above information to the Remotely var
-    UpdateRemotelyNodeMap -ModuleStatus $ModuleStatus -PathStatus $PathStatus
+        # at the end update the status of the node
+        $ModuleStatus, $pathStatus = TestRemotelyNode @PSBoundParameters
+        # Add the above information to the Remotely var
+        UpdateRemotelyNodeMap -ModuleStatus $ModuleStatus -PathStatus $PathStatus -NodeName $session.ComputerName
+    }
+    
 }
 
 Function TestRemotelyNode {
@@ -195,7 +202,7 @@ Function CopyModuleFolderToRemotelyNode {
         [Parameter(Mandatory)]
         [String]$Destination
    )
-   Invoke-Command -Session $Session -ScriptBlock {$null = New-Item -Path $Using:Destination} -ErrorAction SilentlyContinue
+   Invoke-Command -Session $Session -ScriptBlock {$null = New-Item -Path $Using:Destination -ItemType Directory} -ErrorAction SilentlyContinue
    #$folderName = Split-Path -Path $Path -Leaf
    Copy-Item -Path "$Path\*" -Destination $Destination -ToSession $session  -Force
 }
