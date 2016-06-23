@@ -26,14 +26,34 @@ Function UpdateRemotelyNodeMap {
 }
 
 Function TestRemotelyNodeBootStrapped {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='SessionInfo')]
     param(
-        [Parameter(Mandatory)]
-        $SessionInfo
+        [Parameter(Mandatory, ParameterSetName='SessionInfo')]
+        $SessionInfo,
+
+        [Parameter(Mandatory, ParameterSetName='ComputerName')]
+        [String]$ComputerName
+
     )
     if ($Remotely.NodeMap.Count -gt 0) {
-        if($Remotely.NodeMap.NodeName -contains $($SessionInfo.Session.ComputerName)) {
-            $True
+        Switch -Exact ($PSCmdlet.ParameterSetName) {
+            'SessionInfo' {
+                $node = $Remotely.NodeMap | Where -Property NodeName -eq $($SessionInfo.Session.ComputerName)
+                break
+            }
+            'ComputerName' {
+                $node = $Remotely.NodeMap | Where -Property NodeName -eq $ComputerName
+                break
+            }
+        }
+        
+        if($node) {
+            if($node.pathStatus -and $($node.moduleStatus.Values -notcontains $False)) {
+                $True
+            }
+            else {
+                $false  # node is either missing the path or module bootstrapping
+            }
         }
         else {
             $false
@@ -155,7 +175,7 @@ Function TestModulePresentInLib {
         [Microsoft.PowerShell.Commands.ModuleSpecification]$FullyQualifiedName
     )
     $LibPath  = Resolve-Path -Path $PSScriptRoot\..\lib | Select-Object -ExpandProperty Path
-    $ModulePath = '{1}_{2}' -f $PSScriptRoot, $FullyQualifiedName.Name, $FullyQualifiedName.Version
+    $ModulePath = '{0}\{1}' -f  $FullyQualifiedName.Name, $FullyQualifiedName.Version
     Test-Path -Path "$libPath\$modulePath" -ErrorAction Stop 
 }
 
@@ -176,10 +196,10 @@ Function CopyRemotelyNodeModule {
     TRY {
         if (testModulePresentInLib -FullyQualifiedName $FullyQualifiedName) {
             $LibPath  = Resolve-Path -Path $PSScriptRoot\..\lib | Select-Object -ExpandProperty Path
-            CopyModuleFolderToRemotelyNode -path "$LibPath\$moduleName*\*" -Destination "$($Remotely.remotelyNodePath)\lib\$moduleName" -session $session -ErrorAction Stop
+            CopyModuleFolderToRemotelyNode -path "$LibPath\$moduleName\$moduleVersion" -Destination "$($Remotely.remotelyNodePath)\lib\$moduleName" -session $session -ErrorAction Stop
         }
         else {
-            throw "Lib folder does not have a folder named $($moduleName)_$($moduleVersion), so it can't be copied to the remotely node."
+            throw "Lib folder does not have a folder named $($moduleName)\$($moduleVersion), so it can't be copied to the remotely node."
         }
         
     }
@@ -204,5 +224,5 @@ Function CopyModuleFolderToRemotelyNode {
    )
    Invoke-Command -Session $Session -ScriptBlock {$null = New-Item -Path $Using:Destination -ItemType Directory} -ErrorAction SilentlyContinue
    #$folderName = Split-Path -Path $Path -Leaf
-   Copy-Item -Path "$Path\*" -Destination $Destination -ToSession $session  -Force
+   Copy-Item -Path "$Path" -Destination $Destination -Recurse -ToSession $session  -Force
 }
