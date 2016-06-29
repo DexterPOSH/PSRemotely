@@ -35,6 +35,9 @@ function Remotely
 	if ($argumentList){
 		Set-Variable -Name ArgumentList  -Scope  Script
 	}
+	else {
+		New-Variable -Name ArgumentList -Scope Script -Value @{} -Force -ErrorAction SilentlyContinue
+	}
 	
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
 		'ConfigurationData' {
@@ -54,26 +57,26 @@ function Remotely
 		$configurationData = Update-ConfigData -ConfigurationData $configurationData
 
 		# Define the AllNodes variable in current scope
-		New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope  Script
-	 
-		if ($Script:AllNodes.NodeName) {
-			CreateSessions -Nodes $Script:AllNodes.NodeName -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+		New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope  Global -Force
+	 	
+		if ($Global:AllNodes.NodeName) {
+			CreateSessions -ConfigData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
 
-			if( $script:sessionsHashTable.Values.Count -le 0) {
+			if( $Remotely.sessionHashTable.Values.count -le 0) {
 				throw 'No sessions created'
 			}
 			else {
-				foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
-				{
-					CheckAndReConnect -sessionInfo $sessionInfo
-					if($Script:remotelyNodeMap.ContainsKey($($SessionInfo.Session.ComputerName))) {
-						# In memory Node map, has the node marked as bootstrapped
+				foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
+					{
+						CheckAndReConnect -sessionInfo $sessionInfo
+						if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
+							# In memory Node map, has the node marked as bootstrapped
+						}
+						else {
+							# run the bootstrap function
+							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
+						}
 					}
-					else {
-						# run the bootstrap function
-						BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired
-					}
-				}
 			}
 		}
 		
@@ -84,6 +87,7 @@ function Remotely
 	}
 	END {
 		& $Body # invoke the body
+		Remove-Variable -Name AllNodes -Scope Global -Force -ErrorAction SilentlyContinue
 	}
 	
 	
