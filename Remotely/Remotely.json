@@ -1,0 +1,16 @@
+{
+    "RemotelyNodePath": "C:\\Temp\\Remotely",
+    "modulesRequired": [
+        {
+            "Modulename": "Pester",
+            "ModuleVersion": "3.3.14"
+        },
+        {
+            "ModuleName": "PoshSpec",
+            "ModuleVersion": "2.1.6"
+        }
+    ],
+    "ArtefactsRequired":[
+       "DeploymentManifest.xml" 
+    ]
+}
