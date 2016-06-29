@@ -55,12 +55,19 @@ Function Node {
 	PROCESS {
 
 		foreach($nodeName in $name)  {
+			
+
 			# get the test name from the Describe block
 			$testName = Get-TestName -Content $testBlock
 			# generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
 			$testFileName = "{0}.{1}.Tests.ps1" -f $nodeName, $testName.replace(' ','_')
 			# get the relevant Session for the node
 			$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -eq $nodeName}
+
+			# copy/overwrite the artefacts on the remotely nodes
+			Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Recurse -ToSession $session  -Force
+
+			# invoke the Pester tests
 			$testjob += Invoke-Command -Session $session -ScriptBlock {
 				param(
 					[hashtable]$Remotely,
@@ -96,7 +103,7 @@ Function Node {
 				}
 				else {
 					if ($Node) {
-						Invoke-Pester -Script @{Path=$($TesFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
+						Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
 					}
 					else {
 						Invoke-Pester -Script $testFile  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
