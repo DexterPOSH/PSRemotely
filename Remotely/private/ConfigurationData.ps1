@@ -40,8 +40,8 @@ Function Update-ConfigData {
 		[Hashtable]$ConfigurationData
 	)
 
-	if ($configurationData.AllNodes.Where({$PSitem.NodeName -eq '*'})) {
-			$AllNodeSettings = $Node
+	if ($configurationData.AllNodes | Where -Property NodeName -eq '*') {
+			$AllNodeSettings = $configurationData.AllNodes | Where -Property NodeName -eq '*'
 	}
 
 	# Copy all the settings for the nodes
