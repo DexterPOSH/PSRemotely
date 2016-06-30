@@ -60,6 +60,8 @@ Function ProcessRemotelyOutputToJSON {
             Tests = if ($Raw.ISPresent) {@($result.TestResult)} else {GetFormattedTestResult -TestResult $result.TestResult};
             #Status = if ($result.FailedCount) {$False} else {$True};
         }
+
+        $output.Add('Status',$(@($output.Tests.GetEnumerator() | Foreach {$PSItem.Result}) -notcontains $false ))
         $output | ConvertTo-Json -depth 100
     }
 
@@ -73,10 +75,11 @@ Function GetFormattedTestResult {
         [ValidateNotNullOrEmpty()]
         [System.Collections.ArrayList]$testResult  
     )
+        $outputHashArray = @()
         $testsGroup = $testResult |Group-Object -Property Describe  
         foreach ($testGroup in $testsGroup) {
             $result = ($TestGroup.Group | select -ExpandProperty Passed ) -Notcontains $false
-            $outputHash = @{
+            $outputHashArray += @{
                 Name = $testGroup.Name
                 Result = $result
                 TestResult =  $testGroup.Group | 
@@ -84,5 +87,5 @@ Function GetFormattedTestResult {
                                 Select -Property Describe, Context, Name, Result, ErrorRecord
                 }
             }
-            Write-Output -InputObject $outputHash
+            Write-Output -InputObject $outputHashArray
 }
