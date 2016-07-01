@@ -31,12 +31,12 @@ function AddArgumentListtoSessionVars {
 							# there are arguments passed to the session other than PSversionTable, add them to the current session
 							$PSSenderInfo.ApplicationArguments.Keys -ne 'PSversionTable' |
 								Foreach-Object -Process {
-									New-Variable -Name $PSitem -Value  $PSSenderInfo.ApplicationArguments[$PSitem]
+									New-Variable -Name $PSitem -Value  $PSSenderInfo.ApplicationArguments[$PSitem] -Force
 								}
 						}
 					};
 		Session = $session;
-		ErroAction = 'Stop';
+		ErrorAction = 'Stop';
 	}
 	Invoke-Command 	@InvokeCommandParams
 }
@@ -58,12 +58,7 @@ function CreateSessions
 		[Parameter(ParameterSetName='ConfigurationData')]
 		[HashTable]$ConfigData
     )
-	if ($argumenList) {
-		$PSSessionOption = New-PSSessionOption -ApplicationArguments $ArgumentList  -NoMachineProfile         
-	}
-	else {
-		$PSSessionOption = New-PSSessionOption  -NoMachineProfile 
-	}
+
 	# try to see if there are already open PSSessions
 	$existingPSSessions = @(Get-PSSession -Name Remotely* | Where -Property State -eq 'Opened')
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
@@ -74,7 +69,7 @@ function CreateSessions
 				if(-not $Remotely.SessionHashTable.ContainsKey($Node))
 				{                                   
 					$sessionName = "Remotely-" + $Node 
-					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName                          
+					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                        
 					if ($existingPSSession) {
 						$sessionInfo = CreateSessionInfo -Session $existingPSSession	
 					}
@@ -93,18 +88,20 @@ function CreateSessions
 		}
 		'ConfigurationData' {
 			foreach ($node in $ConfigData.AllNodes) {
-				$ArgumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
+				$argumentList = $Script:argumentList.clone()
+				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in 
 				if(-not $Remotely.SessionHashTable.ContainsKey($Node.NodeName))
 				{                                   
-					$sessionName = "Remotely-" + $Node.NodeName                              
-					if ($CredentialHash -and $CredentialHash[$Node.NodeName])
-					{
+					$sessionName = "Remotely-" + $Node.NodeName 
+                    $PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
+					
+					if ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
 						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
 					}
-					else
-					{
+					else {
 						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)  
 					}
+                    AddArgumentListtoSessionVars -session $sessionInfo.Session
 					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}
 			}

@@ -226,3 +226,40 @@ Function CopyModuleFolderToRemotelyNode {
    #$folderName = Split-Path -Path $Path -Leaf
    Copy-Item -Path "$Path" -Destination $Destination -Recurse -ToSession $session  -Force
 }
+
+
+Function CopyTestsFileToRemotelyNode {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Management.Automation.Runspaces.PSSession]$session,
+
+
+        [Parameter(Mandatory)]
+        [String]$TestName,
+
+        [Parameter(Mandatory)]
+        [String]$TestBlock
+    )
+
+    
+    $copyTestsFileParams = @{
+        'Session' = $session
+        'ArgumentList' = $testName, $testBlock
+        'Scriptblock' = {
+            param(
+                [String]$testName,
+                [String]$testBlock
+            )
+            # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
+            $testFileName = "{0}.{1}.Tests.ps1" -f $nodeName, $testName.replace(' ','_')
+            $testFile = "$($Global:Remotely.remotelyNodePath)\$testFileName"
+            if ($Node) { 
+                # Check if the $Node var was populated in the remote session, then add param node to the test block
+                $testBlock = $testBlock.Insert(0,"param($node)`n")
+            }
+            Set-Content -Path $testFile -Value $testBlock -Force
+        }
+    }
+    Invoke-Command @copyTestsFileParams 
+}

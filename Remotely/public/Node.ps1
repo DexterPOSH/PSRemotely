@@ -56,27 +56,32 @@ Function Node {
 
 		foreach($nodeName in $name)  {
 			
-
-			# get the test name from the Describe block
-			$testName = Get-TestName -Content $testBlock
-			# generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
-			$testFileName = "{0}.{1}.Tests.ps1" -f $nodeName, $testName.replace(' ','_')
 			# get the relevant Session for the node
 			$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -eq $nodeName}
+
+			# get the test name from the Describe block
+			$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
+			
+			#region copy the required tests file and artefacts
+
+			foreach ($entry in $testNameandTestBlockArray) {
+		
+				# Copy each tests file to the remote node.
+				CopyTestsFileToRemotelyNode -Session $session -TestName $entry.Keys -TestBlock $entry.Values
+			}
 
 			# copy/overwrite the artefacts on the remotely nodes
 			Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Recurse -ToSession $session  -Force
 
+			#endregion copy the required tests file and artefacts
+
+	
+			
 			# invoke the Pester tests
 			$testjob += Invoke-Command -Session $session -ScriptBlock {
 				param(
 					[hashtable]$Remotely,
-					[String]$testBlock,
-					[String]$testFileName,
-					[String]$nodeName,
-					[String]$testName,
-					[Object[]]$Script # Passed to Pester while invoking
-
+					[String]$nodeName
 				)
                 $Remotely.modulesRequired | 
                 Foreach {
@@ -85,33 +90,15 @@ Function Node {
                     Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 					Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
                 }
-				$testFile = "$($Remotely.remotelyNodePath)\$testFileName"
-				$outPutFile = "{0}\{1}.{2}.xml" -f 	 $Remotely.remotelyNodePath, $nodeName, $testName
-				if ($Node) { 
-					# Check if the $Node var was populated in the remote session, then add param node to the test block
-					$testBlock = $testBlock.Insert(0,'param($node)')
-				}
-				Set-Content -Path $testFile -Value $testBlock	-Force
-				$pesterParams = @{}
-				if ($Script) {
-					$pesterParams.Add('Script',$Script)
-				}
-
-				# TODO check if Pester arguments are populated in as variables and use them there
-				if($pesterParams.Count -ge 1) {
-					Invoke-Pester @pesterParams -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
-				}
-				else {
-					if ($Node) {
-						Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
+				$nodeoutputFile = "{0}.xml}" -f $nodeName
+				# invoke pester now to run all the tests
+				if ($Node) {
+						Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
 					}
 					else {
-						Invoke-Pester -Script $testFile  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
+						Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1"  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
 					}
-					
-				}
-                
-			} -ArgumentList $Remotely, $($testBlock.ToString()), $testFileName , $nodeName, $testName -AsJob 
+			} -ArgumentList $Remotely, $nodeName -AsJob 
 		}
 	}
 	END {
