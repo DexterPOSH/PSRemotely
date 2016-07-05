@@ -244,22 +244,23 @@ Function CopyTestsFileToRemotelyNode {
 
     
     $copyTestsFileParams = @{
-        'Session' = $session
-        'ArgumentList' = $testName, $testBlock
+        'Session' = $session;
+        'ArgumentList' = @($Remotely, $testName, $testBlock)
         'Scriptblock' = {
             param(
+                [HashTable]$Remotely,
                 [String]$testName,
                 [String]$testBlock
             )
             # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
-            $testFileName = "{0}.{1}.Tests.ps1" -f $nodeName, $testName.replace(' ','_')
-            $testFile = "$($Global:Remotely.remotelyNodePath)\$testFileName"
+            $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            $testFile = "$($Remotely.remotelyNodePath)\$testFileName"
             if ($Node) { 
                 # Check if the $Node var was populated in the remote session, then add param node to the test block
                 $testBlock = $testBlock.Insert(0,"param(`$node)`n")
             }
             Set-Content -Path $testFile -Value $testBlock -Force
-        }
+        };
     }
     Invoke-Command @copyTestsFileParams 
 }
@@ -278,11 +279,12 @@ Function CleanupRemotelyNodePath {
         'ArgumentList' = $RemotelyNodePath
         'ScriptBlock' = {
             param([String]$path)
-            if ( -not (Test-Path -Path "$Path\Archive" -PathType Container)) {
-                $null = New-Item -Path "$Path\Archive" -ItemType Directory
+
+            if ( -not (Test-Path -Path $Path\archive -PathType Container)) {
+                $null = New-Item -Path "$Path\archive" -ItemType Directory
             }
             Get-ChildItem -Path $Path -File |
-                Move-Item -Destination .\Archive -Force
+                Move-Item -Destination "$path\archive" -Force
         }
     }
     Invoke-Command @cleanupParams
