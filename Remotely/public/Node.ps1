@@ -64,10 +64,13 @@ Function Node {
 			
 			#region copy the required tests file and artefacts
 
-			foreach ($entry in $testNameandTestBlockArray) {
-		
+			$testNameandTestBlockArray | Foreach-Object -Begin {
+					# archive the existing tests files on the remotely node
+					CleanupRemotelyNodePath -Session $session -RemotelyNodePath $Remotely.remotelyNodePath
+				} `
+				-Process {
 				# Copy each tests file to the remote node.
-				CopyTestsFileToRemotelyNode -Session $session -TestName $entry.Keys -TestBlock $entry.Values
+				CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
 			}
 
 			# copy/overwrite the artefacts on the remotely nodes
@@ -90,7 +93,7 @@ Function Node {
                     Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 					Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
                 }
-				$nodeoutputFile = "{0}.xml}" -f $nodeName
+				$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $nodeName
 				# invoke pester now to run all the tests
 				if ($Node) {
 						Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile

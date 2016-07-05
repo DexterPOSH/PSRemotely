@@ -256,10 +256,35 @@ Function CopyTestsFileToRemotelyNode {
             $testFile = "$($Global:Remotely.remotelyNodePath)\$testFileName"
             if ($Node) { 
                 # Check if the $Node var was populated in the remote session, then add param node to the test block
-                $testBlock = $testBlock.Insert(0,"param($node)`n")
+                $testBlock = $testBlock.Insert(0,"param(`$node)`n")
             }
             Set-Content -Path $testFile -Value $testBlock -Force
         }
     }
     Invoke-Command @copyTestsFileParams 
+}
+
+Function CleanupRemotelyNodePath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Management.Automation.Runspaces.PSSession]$session,
+
+        [Parameter(Mandatory)]
+        [String]$RemotelyNodePath
+    )
+    $cleanupParams = @{
+        'Session' = $session;
+        'ArgumentList' = $RemotelyNodePath
+        'ScriptBlock' = {
+            param([String]$path)
+            if ( -not (Test-Path -Path "$Path\Archive" -PathType Container)) {
+                $null = New-Item -Path "$Path\Archive" -ItemType Directory
+            }
+            Get-ChildItem -Path $Path -File |
+                Move-Item -Destination .\Archive -Force
+        }
+    }
+    Invoke-Command @cleanupParams
+
 }
