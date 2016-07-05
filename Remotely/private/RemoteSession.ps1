@@ -89,18 +89,23 @@ function CreateSessions
 		'ConfigurationData' {
 			foreach ($node in $ConfigData.AllNodes) {
 				$argumentList = $Script:argumentList.clone()
-				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in 
+				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
 				if(-not $Remotely.SessionHashTable.ContainsKey($Node.NodeName))
 				{                                   
 					$sessionName = "Remotely-" + $Node.NodeName 
                     $PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
 					
-					if ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
+					if ($node.Credential) {
+						# if the node has a key called credential set then use it to create the pssession, First priroity
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $node.Credential -SessionOption $PSSessionOption) -Credential $node.Credential
+					}
+					elseif ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
 						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
 					}
 					else {
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)  
+						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
 					}
+					
                     AddArgumentListtoSessionVars -session $sessionInfo.Session
 					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}
