@@ -83,6 +83,17 @@ Function Invoke-Remotely {
             'BootStrap' {
                 # Path to a Script housing Remotely tests, it should run the script as it script
                 Write-VerboseLog -Message 'ParameterSet - BootStrap'
+                $invokeTestScript = {
+                    param (
+                        [Parameter(Position = 0)]
+                        [string] $Path,
+
+                        [object[]] $Arguments = @(),
+                        [System.Collections.IDictionary] $Parameters = @{}
+                    )
+
+                    & $Path @Parameters @Arguments
+                }
                 
                 $testScripts = ResolveTestScripts $Script
 
@@ -94,7 +105,7 @@ Function Invoke-Remotely {
                     }
                     catch{
                         $firstStackTraceLine = $_.ScriptStackTrace -split '\r?\n' | Select-Object -First 1
-                        Write-Log -Message "Error occurred in test script '$($testScript.Path) -> $firstStackTraceLine"
+                        Write-VerboseLog -Message "Error occurred in test script '$($testScript.Path) -> $firstStackTraceLine"
                         
                     }
                 }
