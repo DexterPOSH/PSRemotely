@@ -57,7 +57,8 @@ Function Node {
 		foreach($nodeName in $name)  {
 			
 			# get the relevant Session for the node
-			$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -eq $nodeName}
+			$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -like "*$nodeName*"} # Note -like "*$nodeName*" added because configdata may use IPv6 address
+            # If Ipv6Address is used to connect to the remotely node then the [,] braces are added to the computername property to the session object
 
 			# get the test name from the Describe block
 			$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
@@ -83,8 +84,7 @@ Function Node {
 			# invoke the Pester tests
 			$testjob += Invoke-Command -Session $session -ScriptBlock {
 				param(
-					[hashtable]$Remotely,
-					[String]$nodeName
+					[hashtable]$Remotely
 				)
                 $Remotely.modulesRequired | 
                 Foreach {
@@ -93,7 +93,7 @@ Function Node {
                     Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 					Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
                 }
-				$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $nodeName
+				$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $Env:ComputerName
 				# invoke pester now to run all the tests
 				if ($Node) {
 						Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
@@ -101,7 +101,7 @@ Function Node {
 					else {
 						Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1"  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
 					}
-			} -ArgumentList $Remotely, $nodeName -AsJob 
+			} -ArgumentList $Remotely -AsJob 
 		}
 	}
 	END {
