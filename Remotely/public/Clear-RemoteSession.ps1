@@ -1,9 +1,10 @@
 function Clear-RemoteSession
 {
-    foreach($sessionInfo in $script:sessionsHashTable.Values.GetEnumerator())
-    {
+    foreach($sessionInfo in $Global:Remotely.sessionHashTable.Values.GetEnumerator()){
         Remove-PSSession $sessionInfo.Session
     }
 
-    $script:sessionsHashTable.Clear()
+    $Global:Remotely.sessionHashTable.Clear()
+    $Global:Remotely.NodeMap.Clear()    
+    
 }
