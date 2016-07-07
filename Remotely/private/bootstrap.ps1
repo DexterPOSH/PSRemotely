@@ -137,7 +137,7 @@ Function TestRemotelyNode {
 		    foreach($module in $FullyQualifiedName) {
                 $moduleName=$module.Name
                 $moduleVersion=$module.version
-                if(Test-Path -Path "$remotelyNodePath\lib\$moduleName") {
+                if(Test-Path -Path "$remotelyNodePath\lib\$moduleName\$moduleVersion") {
                     # module present
                     $outputHash[$($module.Name)] = $true
                 }
