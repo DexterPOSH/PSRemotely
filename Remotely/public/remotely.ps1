@@ -27,69 +27,89 @@ function Remotely
 		[hashtable]$credentialHash
     )
 	BEGIN {
-	# Add CredentialHash & ArgumentList in Script scope
-	if ($credentialHash){
-		Set-Variable -Name CredentialHash  -Scope  Script
-	}
+		TRY {
+			# Add CredentialHash & ArgumentList in Script scope
+			if ($credentialHash){
+				Write-VerboseLog -Message 'Setting CredentialHash passed in Script scope'
+				Set-Variable -Name CredentialHash  -Scope  Script
+			}
 
-	if ($argumentList){
-		Set-Variable -Name ArgumentList  -Scope  Script
-	}
-	else {
-		New-Variable -Name ArgumentList -Scope Script -Value @{} -Force -ErrorAction SilentlyContinue
-	}
-	
-	Switch -Exact ($PSCmdlet.ParameterSetName) {
-		'ConfigurationData' {
-			break
-		}
-		'ConfigDataFromFile' {
-			$ConfigurationData = LoadConfigDataFromFile -Path $Path
-			break
-		}
-	}
-	
-	#region create the PSSessions & bootstrap nodes	  
-	if ($ConfigurationData) {
-		# validate the config data
-		Test-ConfigData -ConfigurationData $configurationData
-
-		$configurationData = Update-ConfigData -ConfigurationData $configurationData
-
-		# Define the AllNodes variable in current scope
-		New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope  Global -Force
-	 	
-		if ($Global:AllNodes.NodeName) {
-			CreateSessions -ConfigData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
-
-			if( $Remotely.sessionHashTable.Values.count -le 0) {
-				throw 'No sessions created'
+			if ($argumentList){
+				Write-VerboseLog -Message 'Setting ArgumentList passed in Script scope'
+				Set-Variable -Name ArgumentList  -Scope  Script
 			}
 			else {
-				foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
-					{
-						CheckAndReConnect -sessionInfo $sessionInfo
-						if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
-							# In memory Node map, has the node marked as bootstrapped
-						}
-						else {
-							# run the bootstrap function
-							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
+				Write-VerboseLog -Message 'Creating an emtyp Argumnelist variable in Script scope'
+				New-Variable -Name ArgumentList -Scope Script -Value @{} -Force -ErrorAction SilentlyContinue
+			}
+			
+			Switch -Exact ($PSCmdlet.ParameterSetName) {
+				'ConfigurationData' {
+					Write-VerboseLog -Message 'ParameterSet - ConfigurationData'
+					break
+				}
+				'ConfigDataFromFile' {
+					Write-VerboseLog -Message 'ParameterSet - ConfigDataFromFile'
+					$ConfigurationData = LoadConfigDataFromFile -Path $Path
+					break
+				}
+			}
+			
+			#region create the PSSessions & bootstrap nodes	  
+			if ($ConfigurationData) {
+				Write-VerboseLog -Message 'Configuration data supplied, processing now.'
+				# validate the config data
+				Write-VerboseLog -Message 'Testing the configuration data supplied.'
+				Test-ConfigData -ConfigurationData $configurationData
+
+				Write-VerboseLog -Message 'Updating the configuration data supplied'
+				$configurationData = Update-ConfigData -ConfigurationData $configurationData
+
+				# Define the AllNodes variable in current scope
+				Write-VerboseLog -Message 'Creating the AllNodes global scope variable'
+				New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope  Global -Force
+				
+				if ($Global:AllNodes.NodeName) {
+					Write-VerboseLog -Message 'Creating sessions'
+					CreateSessions -ConfigData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+
+					if( $Remotely.sessionHashTable.Values.count -le 0) {
+						Write-VerboseLog -Message 'Error - No PSSessions opened'
+						throw 'No sessions created'
+					}
+					else {
+						Write-VerboseLog -Message 'PSSessions found open'
+						foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator()) {
+							Write-VerboseLog -Message "Checking and Reconnecting if needed for $($sessionInfo.Session.ComputerName)"
+							CheckAndReConnect -sessionInfo $sessionInfo
+							if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
+								# In memory Node map, has the node marked as bootstrapped
+								Write-VerboseLog -Message "$($sessionInfo.Session.Computername) is bootstrapped."
+							}
+							else {
+								# run the bootstrap function
+								Write-VerboseLog -Message "$($sessioninfo.Session.ComputerName) is NOT bootstrapped. Trying now."
+								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
+							}
 						}
 					}
+				}
 			}
+		} #end Try
+		CATCH {
+			Write-VerboseLog -ErrorInfo $PSitem
+			$PSCmdlet.ThrowTerminatingError($PSitem)
 		}
-		
-	}
-	}
+	} #end Begin
 	PROCESS {
 		
 	}
 	END {
+		Write-VerboseLog -Message 'Invoking the body of Remotely'
 		& $Body # invoke the body
+		Write-VerboseLog -Message 'Clearing the AllNodes global variable'
 		Remove-Variable -Name AllNodes -Scope Global -Force -ErrorAction SilentlyContinue
+	
 	}
-	
-	
 
 }
