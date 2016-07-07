@@ -82,9 +82,9 @@ Function GetFormattedTestResult {
             $outputHashArray += @{
                 Name = $testGroup.Name
                 Result = $result
-                TestResult =  $testGroup.Group | 
+                TestResult =  @($testGroup.Group | 
                                 Where -Property Result -eq 'Failed' |
-                                Select -Property Describe, Context, Name, Result, ErrorRecord
+                                Select -Property Describe, Context, Name, Result, ErrorRecord)
                 }
             }
             Write-Output -InputObject $outputHashArray
