@@ -83,14 +83,120 @@ Function Invoke-Remotely {
             'BootStrap' {
                 # Path to a Script housing Remotely tests, it should run the script as it script
                 Write-VerboseLog -Message 'ParameterSet - BootStrap'
-                & $Script
+                
+                $testScripts = ResolveTestScripts $Script
+
+                foreach ($testScript in $testScripts){
+                    try {
+                        do{
+                            & $invokeTestScript -Path $testScript.Path -Arguments $testScript.Arguments -Parameters $testScript.Parameters
+                        } until ($true)
+                    }
+                    catch{
+                        $firstStackTraceLine = $_.ScriptStackTrace -split '\r?\n' | Select-Object -First 1
+                        Write-Log -Message "Error occurred in test script '$($testScript.Path) -> $firstStackTraceLine"
+                        
+                    }
+                }
             }
         }
     }
     END {
-        $null = $testjob | Wait-Job
-		$results = @(ProcessRemotelyJobs -InputObject $TestJob)
-        $testjob | Remove-Job -Force
-	    ProcessRemotelyOutputToJSON -InputObject $results
+        if ($PSCmdlet.ParameterSetName -eq 'JSON') {
+            $null = $testjob | Wait-Job
+            $results = @(ProcessRemotelyJobs -InputObject $TestJob)
+            $testjob | Remove-Job -Force
+            ProcessRemotelyOutputToJSON -InputObject $results
+        }
+        
+    }
+}
+
+
+
+function ResolveTestScripts
+{
+    param ([object[]] $Path)
+
+    $resolvedScriptInfo = @(
+        foreach ($object in $Path)
+        {
+            if ($object -is [System.Collections.IDictionary])
+            {
+                $unresolvedPath = Get-DictionaryValueFromFirstKeyFound -Dictionary $object -Key 'Path', 'p'
+                $arguments      = @(Get-DictionaryValueFromFirstKeyFound -Dictionary $object -Key 'Arguments', 'args', 'a')
+                $parameters     = Get-DictionaryValueFromFirstKeyFound -Dictionary $object -Key 'Parameters', 'params'
+
+                if ($unresolvedPath -isnot [string] -or $unresolvedPath -notmatch '\S')
+                {
+                    throw 'When passing hashtables to the -Path parameter, the Path key is mandatory, and must contain a single string.'
+                }
+
+                if ($null -ne $parameters -and $parameters -isnot [System.Collections.IDictionary])
+                {
+                    throw 'When passing hashtables to the -Path parameter, the Parameters key (if present) must be assigned an IDictionary object.'
+                }
+            }
+            else
+            {
+                $unresolvedPath = [string] $object
+                $arguments      = @()
+                $parameters     = @{}
+            }
+
+            if ($unresolvedPath -notmatch '[\*\?\[\]]' -and
+                (Test-Path -LiteralPath $unresolvedPath -PathType Leaf) -and
+                (Get-Item -LiteralPath $unresolvedPath) -is [System.IO.FileInfo]){
+                
+                $extension = [System.IO.Path]::GetExtension($unresolvedPath)
+                if ($extension -ne '.ps1'){
+                    Write-Error "Script path '$unresolvedPath' is not a ps1 file."
+                }
+                else
+                {
+                    New-Object -TypeName psobject -Property @{
+                        Path       = $unresolvedPath
+                        Arguments  = $arguments
+                        Parameters = $parameters
+                    }
+                }
+            }
+            else
+            {
+                # World's longest pipeline?
+
+                Resolve-Path -Path $unresolvedPath |
+                    Where-Object { $_.Provider.Name -eq 'FileSystem' } |
+                    Select-Object  -ExpandProperty ProviderPath |
+                    Get-ChildItem -Include *.Tests.ps1 -Recurse |
+                    Where-Object { -not $_.PSIsContainer } |
+                    Select-Object -ExpandProperty FullName -Unique |
+                    ForEach-Object {
+                        New-Object  psobject -Property @{
+                            Path       = $_
+                            Arguments  = $arguments
+                            Parameters = $parameters
+                        }
+                    }
+            }
+        }
+    )
+
+    # Here, we have the option of trying to weed out duplicate file paths that also contain identical
+    # Parameters / Arguments.  However, we already make sure that each object in $Path didn't produce
+    # any duplicate file paths, and if the caller happens to pass in a set of parameters that produce
+    # dupes, maybe that's not our problem.  For now, just return what we found.
+
+    $resolvedScriptInfo
+}
+
+
+function Get-DictionaryValueFromFirstKeyFound
+{
+    param ([System.Collections.IDictionary] $Dictionary, [object[]] $Key)
+
+    foreach ($keyToTry in $Key)
+    {
+        if ($Dictionary.Contains($keyToTry)) { return $Dictionary[$keyToTry] }
     }
 }
