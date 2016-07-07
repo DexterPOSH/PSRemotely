@@ -16,99 +16,129 @@ Function Node {
 
     )
 	BEGIN {
-		if($Remotely.sessionHashTable.Count -ne 0) {
-			$sessions = @()
-			foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
-			{
-				$sessions += $sessionInfo.Session
+		TRY {
+			Write-VerboseLog -Message 'Begin Node Processing'
+			if($Remotely.sessionHashTable.Count -ne 0) {
+				$sessions = Get-RemoteSession
+				Write-VerboseLog -Message "found sessions in SessionHashTable "
 			}
-		}
-		else {
-			# this might mean that the Configuration data was never supplied
-			# Check if the AllNodes Script var is present is not null
-			if(-not $Global:AllNodes) {
-				
-				CreateSessions -Nodes $Name  -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
-				if( $Remotely.sessionHashTable.Values.count -le 0) {
-					throw 'No sessions created'
-				}
-				else {
-                    $sessions = @()
-					foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
-					{
-						CheckAndReConnect -sessionInfo $sessionInfo
-                        $sessions += $sessionInfo.Session
-						if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
-							# In memory Node map, has the node marked as bootstrapped
+			else {
+				Write-VerboseLog -Message "No sessions found in SessionHashTable"
+				# this might mean that the Configuration data was never supplied
+				# Check if the AllNodes Script var is present is not null
+				if(-not $Global:AllNodes) {
+					Write-VerboseLog -Message "AllNodes variable is not created. Implies configuration data was not supplied"
+					Write-VerboseLog -Message "Creating sessions"
+					CreateSessions -Nodes $Name  -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+					if( $Remotely.sessionHashTable.Values.count -le 0) {
+						Write-VerboseLog -Message 'Error - No PSSessions opened'
+						throw 'No sessions created'
+					}
+					else {
+						Write-VerboseLog -Message 'PSSessions found open'
+						foreach($sessionInfo in $Remotely.sessionHashTable.Values.GetEnumerator())
+						{
+							Write-VerboseLog -Message "Checking and Reconnecting if needed for $($sessionInfo.Session.ComputerName)"
+							CheckAndReConnect -sessionInfo $sessionInfo
+							if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
+								# In memory Node map, has the node marked as bootstrapped
+								Write-VerboseLog -Message "$($sessionInfo.Session.Computername) is bootstrapped."
+							}
+							else {
+								# run the bootstrap function
+								Write-VerboseLog -Message "$($sessioninfo.Session.ComputerName) is NOT bootstrapped. Trying now."
+								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
+							}
 						}
-						else {
-							# run the bootstrap function
-							BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $Remotely.modulesRequired -RemotelyNodePath $Remotely.remotelyNodePath
-						}
+						$sessions = Get-RemoteSession
 					}
 				}
 			}
+			$testjob = @()
+		} # end Try
+		CATCH {
+			Write-VerboseLog -ErrorInfo $PSitem
+			$PSCmdlet.ThrowTerminatingError($PSitem)	
 		}
-		
-		$testjob = @()
 	}
 	PROCESS {
 
 		foreach($nodeName in $name)  {
-			
-			# get the relevant Session for the node
-			$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -like "*$nodeName*"} # Note -like "*$nodeName*" added because configdata may use IPv6 address
-            # If Ipv6Address is used to connect to the remotely node then the [,] braces are added to the computername property to the session object
+			TRY {
+				Write-VerboseLog -Message "Setting up Node -> $nodeName for tests execution"
+				# get the relevant Session for the node
+				$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -like "*$nodeName*"} # Note -like "*$nodeName*" added because configdata may use IPv6 address
+				# If Ipv6Address is used to connect to the remotely node then the [,] braces are added to the computername property to the session object
 
-			# get the test name from the Describe block
-			$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
-			
-			#region copy the required tests file and artefacts
+				if ($session) {
+					Write-VerboseLog -Message "PSSession for $nodeName found."
+					# get the test name from the Describe block
+					Write-VerboseLog -Message "Fetching the test name & test block targeted at Node -> $nodeName"
+					$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
+					
+					#region copy the required tests file and artefacts
+					Write-VerboseLog -Message "Cleanup & Copying tests file to the Node -> $nodeName"
+					$testNameandTestBlockArray | Foreach-Object -Begin {
+							# archive the existing tests files on the remotely node
+							Write-VerboseLog -Message "Cleaning up $($Remotely.remotelyNodePath) on Node -> $nodeName"
+							CleanupRemotelyNodePath -Session $session -RemotelyNodePath $Remotely.remotelyNodePath
+						} `
+						-Process {
+						# Copy each tests file to the remote node.
+						Write-VerboseLog -Message "Copying test named $($PSitem.Keys -join ' ') on Node -> $nodeName"
+						CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
+					}
 
-			$testNameandTestBlockArray | Foreach-Object -Begin {
-					# archive the existing tests files on the remotely node
-					CleanupRemotelyNodePath -Session $session -RemotelyNodePath $Remotely.remotelyNodePath
-				} `
-				-Process {
-				# Copy each tests file to the remote node.
-				CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
+					# copy/overwrite the artefacts on the remotely nodes
+					Write-VerboseLog -Message "Copying artefacts on Node -> $nodeName"
+					Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Recurse -ToSession $session  -Force
+
+					#endregion copy the required tests file and artefacts
+					
+					# invoke the Pester tests
+					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."
+					$testjob += Invoke-Command -Session $session -ScriptBlock {
+						param(
+							[hashtable]$Remotely
+						)
+						$Remotely.modulesRequired | 
+						Foreach {
+							$moduleName = $PSitem.ModuleName
+							$moduleVersion = $Psitem.ModuleVersion
+							Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
+							Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
+						}
+						$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $Env:ComputerName
+						# invoke pester now to run all the tests
+						if ($Node) {
+								Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
+							}
+							else {
+								Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1"  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
+							}
+					} -ArgumentList $Remotely -AsJob 
+				}
+				else {
+					Write-Warning -Message "PSSession for $nodeName NOT found."
+					Write-VerboseLog -Message "PSSession for $nodeName NOT found."			
+				}
+			} # end TRY
+			CATCH {
+				Write-VerboseLog -ErrorInfo $PSitem
+				Write-Warning -Message "Setting up Node -> $nodeName , and running tests failed"
+				#$PSCmdlet.ThrowTerminatingError($PSitem)
 			}
-
-			# copy/overwrite the artefacts on the remotely nodes
-			Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Recurse -ToSession $session  -Force
-
-			#endregion copy the required tests file and artefacts
-
-	
-			
-			# invoke the Pester tests
-			$testjob += Invoke-Command -Session $session -ScriptBlock {
-				param(
-					[hashtable]$Remotely
-				)
-                $Remotely.modulesRequired | 
-                Foreach {
-					$moduleName = $PSitem.ModuleName
-					$moduleVersion = $Psitem.ModuleVersion
-                    Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
-					Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
-                }
-				$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $Env:ComputerName
-				# invoke pester now to run all the tests
-				if ($Node) {
-						Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
-					}
-					else {
-						Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1"  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
-					}
-			} -ArgumentList $Remotely -AsJob 
 		}
 	}
 	END {
-		$null = $testjob | Wait-Job
-		$results = @(ProcessRemotelyJobs -InputObject $TestJob)
-        $testjob | Remove-Job -Force
-	    ProcessRemotelyOutputToJSON -InputObject $results
+		#$null = $testjob | Wait-Job
+		#$results = @(ProcessRemotelyJobs -InputObject $TestJob)
+        #$testjob | Remove-Job -Force
+	    #ProcessRemotelyOutputToJSON -InputObject $results
+
+		# Process background jobs as they are finished, rather than waiting for all of them to finish
+		Write-VerboseLog -Message "Start background processing of the Remotely jobs."
+		Start-RemotelyJobProcessing -InputObject $testJob
     }
 
 }
