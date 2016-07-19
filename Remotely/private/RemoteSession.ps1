@@ -87,26 +87,44 @@ function CreateSessions
 			break
 		}
 		'ConfigurationData' {
+			# since this is Configuration data parameter set, which means it was supplied.
+			# Call Clear-RemoteSession
 			foreach ($node in $ConfigData.AllNodes) {
 				$argumentList = $Script:argumentList.clone()
 				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
-				if(-not $Remotely.SessionHashTable.ContainsKey($Node.NodeName))
-				{                                   
+				
+                if( $Remotely.SessionHashTable.ContainsKey($Node.NodeName)) {
+                    # node present in the hash table, no need to create another session. Just re-intialize the variables in the session
+                    ReinitializeSession -SessionInfo $Remotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
+                }
+                else { 
+				                                  
 					$sessionName = "Remotely-" + $Node.NodeName 
                     $PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
+					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                        
+					if ($existingPSSession) {
+                        # if there is an open PSSession to the node then use it to create Session info object
+						$sessionInfo = CreateSessionInfo -Session $existingPSSession
+                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList	
+					}
+                    else {
+					    if ($node.Credential) {
+						    # if the node has a key called credential set then use it to create the pssession, First priroity
+                            [ValidateNotNullOrEmpty()]$session = New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $node.Credential -SessionOption $PSSessionOption
+                            [ValidateNotNullOrEmpty()]$credential = $node.Credential
+						    [ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
+					    }
+					    elseif ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
+                            [ValidateNotNullOrEmpty()]$session = New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node.NodeName] -SessionOption $PSSessionOption
+                            [ValidateNotNullOrEmpty()]$credential = $CredentialHash[$node.NodeName]
+						    $sessionInfo = CreateSessionInfo -Session $session -Credential $credential
+					    }
+					    else {
+						    $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
+					    }
 					
-					if ($node.Credential) {
-						# if the node has a key called credential set then use it to create the pssession, First priroity
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $node.Credential -SessionOption $PSSessionOption) -Credential $node.Credential
-					}
-					elseif ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node] -SessionOption $PSSessionOption) -Credential $CredentialHash[$node]
-					}
-					else {
-						$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
-					}
-					
-                    AddArgumentListtoSessionVars -session $sessionInfo.Session
+                        AddArgumentListtoSessionVars -session $sessionInfo.Session
+                    }
 					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
 				}
 			}
@@ -169,5 +187,25 @@ function CheckAndReconnect
             $sessionInfo.Session = New-PSSession -ComputerName 'localhost'
         }
     }
+}
+
+# add this function to re-initialize the entire argument list (along with $node var) in the remote session
+Function ReinitializeSession {
+	[CmdletBinding()]
+	param(
+		[Parameter(Position=0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()] $sessionInfo,
+
+		[Parameter(Position=1, Mandatory=$true)]
+		[ValidateNotNullOrEmpty()] 
+		[HashTable]$ArgumentList
+	)
+	$sessionInfo.Session.Runspace.ResetRunspaceState() # reset the runspace state	
+	Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
+		param($arglist)
+		foreach ($enum in $arglist.GetEnumerator()) {
+			New-Variable -Name $enum.Key -Value $enum.Value -Force
+		}
+	}
 }
  

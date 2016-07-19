@@ -1,7 +1,7 @@
 function Get-RemoteSession
 {
     $sessions = @()
-    foreach($sessionInfo in $Global:Remotely.sessionsHashTable.Values.GetEnumerator())
+    foreach($sessionInfo in $Global:Remotely.sessionHashTable.Values.GetEnumerator())
     {
         $sessions += $sessionInfo.Session
     }

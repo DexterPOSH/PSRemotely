@@ -2,6 +2,11 @@
 Function Invoke-Remotely {
     [CmdletBinding(DefaultParameterSetName='BootStrap')]
     param(
+
+        # Path to the Remotely script file. First step.
+        [Parameter(Mandatory,ParameterSetName='BootStrap',ValueFromPipeline=$true)]
+        [Object[]]$Script,
+        
         <#
          JSON String input which contains the nodename and testnames to run.
          Below is a sample JSON string, for invoking tests named TestDNSConnectivity & TestADConnectivity on node DellBlr2C2A 
@@ -19,11 +24,9 @@ Function Invoke-Remotely {
          #>
 
         [Parameter(Mandatory, ParameterSetName='JSON')]
-        [String]$JSONInput,
+        [String]$JSONInput
 
-        # Path to the Remotely script file. First step.
-        [Parameter(Mandatory,ParameterSetName='BootStrap',ValueFromPipeline=$true)]
-        [String]$Script
+        
 
     )
     BEGIN {
