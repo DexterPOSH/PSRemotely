@@ -7,7 +7,7 @@
         },
         {
             "ModuleName": "PoshSpec",
-            "ModuleVersion": "2.1.9"
+            "ModuleVersion": "2.1.10"
         }
     ],
     "ArtefactsRequired":[
