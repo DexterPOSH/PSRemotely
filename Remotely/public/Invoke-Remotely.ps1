@@ -118,7 +118,7 @@ Function Invoke-Remotely {
     END {
         if ($PSCmdlet.ParameterSetName -eq 'JSON') {
             $null = $testjob | Wait-Job
-            $results = @(ProcessRemotelyJobs -InputObject $TestJob)
+            $results = @(ProcessRemotelyJob -InputObject $TestJob)
             $testjob | Remove-Job -Force
             ProcessRemotelyOutputToJSON -InputObject $results
         }

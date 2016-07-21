@@ -10,6 +10,8 @@ Function UpdateRemotelyNodeMap {
         [Parameter(Mandatory)]
         [String]$NodeName
     )
+    $nodeName = $NodeName.Replace('[','')
+    $nodeName = $nodeName.Replace(']','')
     $nodeExists = $Remotely.NodeMap | Where-Object -Property NodeName -eq $NodeName
     if ($nodeExists) {
         $nodeExists.PathStatus = $PathStatus

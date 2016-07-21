@@ -59,8 +59,8 @@ function CreateSessions
 		[HashTable]$ConfigData
     )
 
-	# try to see if there are already open PSSessions
-	$existingPSSessions = @(Get-PSSession -Name Remotely* | Where -Property State -eq 'Opened')
+	# try to see if there are already open PSSessions, which are available
+	$existingPSSessions = @(Get-PSSession -Name Remotely* | Where-Object -FilterScript { ($PSitem.State -eq 'Opened') -and ($PSitem.Availability -eq 'available')})
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
 		'ComputerName' {
 			
@@ -81,7 +81,7 @@ function CreateSessions
 							$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
 						}
 					}
-					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
+					$Remotely.SessionHashTable.Add($node, $sessionInfo)              
 				}               
 			}
 			break
@@ -94,14 +94,15 @@ function CreateSessions
 				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
 				
                 if( $Remotely.SessionHashTable.ContainsKey($Node.NodeName)) {
-                    # node present in the hash table, no need to create another session. Just re-intialize the variables in the session
+					 #-or ($Remotely.SessionHashTable.ContainsKey("[$($Node.NodeName)]"))) 
+                    # node present in the hash table, no need to create another session. Just re-intialize the variables in the session, added second condition for IPv6Addresse
                     ReinitializeSession -SessionInfo $Remotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
                 }
                 else { 
-				                                  
+				    # SessionHashtable does not have an entry                              
 					$sessionName = "Remotely-" + $Node.NodeName 
                     $PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
-					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                        
+					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                     
 					if ($existingPSSession) {
                         # if there is an open PSSession to the node then use it to create Session info object
 						$sessionInfo = CreateSessionInfo -Session $existingPSSession
@@ -125,8 +126,9 @@ function CreateSessions
 					
                         AddArgumentListtoSessionVars -session $sessionInfo.Session
                     }
-					$Remotely.SessionHashTable.Add($sessionInfo.session.ComputerName, $sessionInfo)              
+					$Remotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
+				
 			}
 			break
 		}
@@ -200,7 +202,12 @@ Function ReinitializeSession {
 		[ValidateNotNullOrEmpty()] 
 		[HashTable]$ArgumentList
 	)
-	$sessionInfo.Session.Runspace.ResetRunspaceState() # reset the runspace state	
+	TRY {
+		$sessionInfo.Session.Runspace.ResetRunspaceState() # reset the runspace state
+	}
+	CATCH {
+		# TO DO : above fails some time. Check why.
+	}
 	Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
 		param($arglist)
 		foreach ($enum in $arglist.GetEnumerator()) {

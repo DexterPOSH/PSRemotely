@@ -91,7 +91,7 @@ Function Node {
 
 					# copy/overwrite the artefacts on the remotely nodes
 					Write-VerboseLog -Message "Copying artefacts on Node -> $nodeName"
-					Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Recurse -ToSession $session  -Force
+					Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts\*" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session 
 
 					#endregion copy the required tests file and artefacts
 					
