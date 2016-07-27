@@ -1,5 +1,6 @@
 function Remotely
 {
+	[OutputType([String[]])]
 	[CmdletBinding(DefaultParameterSetName='ConfigurationData')]
     param 
     (       

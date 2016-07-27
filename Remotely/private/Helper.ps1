@@ -57,7 +57,12 @@ Function ProcessRemotelyOutputToJSON {
     
     $output = @{
         NodeName = $InputObject.RemotelyTarget;
-        Tests = if ($Raw.ISPresent) {@($InputObject.TestResult)} else {GetFormattedTestResult -TestResult $InputObject.TestResult};
+        Tests = @( if ($Raw.ISPresent) {
+                        $InputObject.TestResult
+                    } 
+                    else {
+                        GetFormattedTestResult -TestResult $InputObject.TestResult
+                    })
         #Status = if ($result.FailedCount) {$False} else {$True};
     }
 

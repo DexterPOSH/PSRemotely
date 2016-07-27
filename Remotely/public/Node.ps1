@@ -1,5 +1,5 @@
 Function Node {
-    [OutputType([void])]
+    [OutputType([String[]])]
 	[CmdletBinding()]
     param(
 		[Parameter(Mandatory = $True,Position = 0,
