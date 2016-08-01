@@ -77,13 +77,8 @@ Function Node {
 					$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
 					
 					#region copy the required tests file and artefacts
-					Write-VerboseLog -Message "Cleanup & Copying tests file to the Node -> $nodeName"
-					$testNameandTestBlockArray | Foreach-Object -Begin {
-							# archive the existing tests files on the remotely node
-							Write-VerboseLog -Message "Cleaning up $($Remotely.remotelyNodePath) on Node -> $nodeName"
-							CleanupRemotelyNodePath -Session $session -RemotelyNodePath $Remotely.remotelyNodePath
-						} `
-						-Process {
+					Write-VerboseLog -Message "Copying tests file to the Node -> $nodeName"
+					$testNameandTestBlockArray | Foreach-Object -Process {
 						# Copy each tests file to the remote node.
 						Write-VerboseLog -Message "Copying test named $($PSitem.Keys -join ' ') on Node -> $nodeName"
 						CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values

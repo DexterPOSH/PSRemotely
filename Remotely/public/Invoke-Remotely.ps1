@@ -51,16 +51,17 @@ Function Invoke-Remotely {
                                 select -ExpandProperty Session
                     
                     # build the splat hashtable
-                    $invokeTestParams = @{
+                   $invokeTestParams = @{
                         Session = $session;
-                        ArgumentList = $($Object.Tests.Name);
+                        ArgumentList = $JSONInput #@(,$Object.Tests.Name);
                         ScriptBlock = {
                             param(
-                                [String[]]$testName
+                                [String]$JSONString
                                 )
-
-                            foreach ($test in $testName) {
-                                $testFileName = "{0}.{1}.Tests.ps1" -f $env:ComputerName, $testName.replace(' ','_')
+                            $Object = ConvertFrom-Json -InputObject $JSONString
+                            foreach ($test in @($Object.Tests.Name)) {
+                                Write-Verbose -Message "Processing $test" -Verbose
+                                $testFileName = "{0}.{1}.Tests.ps1" -f $env:ComputerName, $test.replace(' ','_')
                                 $testFile = "$($Global:Remotely.remotelyNodePath)\$testFileName"
                                 $outPutFile = "{0}\{1}.{2}.xml" -f 	 $Remotely.remotelyNodePath, $nodeName, $testName
                                 if ($Node) {
@@ -72,6 +73,7 @@ Function Invoke-Remotely {
                             }
                         }; # end scriptBlock
                     }
+
 
                     # invoke the tests
                     $testJob = Invoke-Command @invokeTestParams -AsJob

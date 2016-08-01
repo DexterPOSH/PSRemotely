@@ -54,9 +54,11 @@ Function ProcessRemotelyOutputToJSON {
         # Specify this switch to get the raw pester output back for the nodes.
         [Switch]$Raw  
     )
-    
+    $NodeName = $InputObject.PSComputerName | Select-Object -Unique
+    $NodeName = $NodeName -replace '\[',''
+    $NodeName = $NodeName -replace '\]',''
     $output = @{
-        NodeName = $InputObject.RemotelyTarget;
+        NodeName = $NodeName;
         Tests = @( if ($Raw.ISPresent) {
                         $InputObject.TestResult
                     } 

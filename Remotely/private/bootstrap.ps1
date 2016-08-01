@@ -85,6 +85,9 @@ Function BootstrapRemotelyNode {
 
     if ($pathStatus -and $($moduleStatus.Values -notcontains $False)) {
         # Node is already bootstrapped, no need to take action
+        # archive the existing tests files on the remotely node
+        Write-VerboseLog -Message "Cleaning up $remotelyNodePath on Node -> $($Session.ComputerName)"
+        CleanupRemotelyNodePath -Session $session -RemotelyNodePath $remotelyNodePath
     }
     else {
         # Node is missing some of the configs, bootstrap it
@@ -101,6 +104,10 @@ Function BootstrapRemotelyNode {
         
         if ($pathStatus) {
             # remotely node path created
+            # archive the existing tests files on the remotely node
+            Write-VerboseLog -Message "Cleaning up $remotelyNodePath on Node -> $($Session.ComputerName)"
+            CleanupRemotelyNodePath -Session $session -RemotelyNodePath $remotelyNodePath
+            
         }
         else {
             CreateRemotelyNodePath	-session $session -Path $remotelyNodePath

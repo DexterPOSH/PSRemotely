@@ -86,6 +86,9 @@ function Remotely
 							if(TestRemotelyNodeBootStrapped -SessionInfo $sessionInfo) {
 								# In memory Node map, has the node marked as bootstrapped
 								Write-VerboseLog -Message "$($sessionInfo.Session.Computername) is bootstrapped."
+								# archive the existing tests files on the remotely node
+								Write-VerboseLog -Message "Cleaning up $($Remotely.remotelyNodePath) on Node -> $($sessionInfo.Session.ComputerName)"
+								CleanupRemotelyNodePath -Session $sessionInfo.session -RemotelyNodePath $Remotely.remotelyNodePath
 							}
 							else {
 								# run the bootstrap function
@@ -107,6 +110,7 @@ function Remotely
 	}
 	END {
 		Write-VerboseLog -Message 'Invoking the body of Remotely'
+		
 		& $Body # invoke the body
 		Write-VerboseLog -Message 'Clearing the AllNodes global variable'
 		Remove-Variable -Name AllNodes -Scope Global -Force -ErrorAction SilentlyContinue
