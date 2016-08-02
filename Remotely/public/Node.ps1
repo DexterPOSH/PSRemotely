@@ -94,7 +94,8 @@ Function Node {
 					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."
 					$testjob += Invoke-Command -Session $session -ScriptBlock {
 						param(
-							[hashtable]$Remotely
+							[hashtable]$Remotely,
+							[string[]]$tag
 						)
 						$Remotely.modulesRequired | 
 						Foreach {
@@ -103,15 +104,26 @@ Function Node {
 							Import-Module "$($Remotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 							Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from remotely lib folder"
 						}
-						$nodeoutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $Env:ComputerName
+						#$nodeOutputFile = "{0}\{1}.xml" -f $($Remotely.remotelyNodePath), $Env:ComputerName
+						$invokePesterParams = @{
+							PassThru = $True;
+							Quiet = $True;
+							OutputFormat = 'NunitXML';
+							OutputFile = '{0}\{1}.xml' -f $($Remotely.remotelyNodePath), $Env:ComputerName;
+						}
 						# invoke pester now to run all the tests
+						if ($Tag) {
+							# Add the tag
+							$invokePesterParams.Add('Tag', $Tag) 
+						}
+						Write-Verbose -Verbose -Message  "Invoking Pester with arguments $($invokePesterParams.GetEnumerator() | % {$_.Key, $_.Value})"
 						if ($Node) {
-								Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
+								Invoke-Pester -Script @{Path="$($Remotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} @invokePesterParams
 							}
 							else {
-								Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1"  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $nodeoutputFile
+								Invoke-Pester -Script "$($Remotely.remotelyNodePath)\*.tests.ps1" @invokePesterParams
 							}
-					} -ArgumentList $Remotely -AsJob 
+					} -ArgumentList $Remotely, $Tag -AsJob 
 				}
 				else {
 					Write-Warning -Message "PSSession for $nodeName NOT found."
