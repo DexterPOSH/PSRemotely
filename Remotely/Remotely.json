@@ -4,10 +4,6 @@
         {
             "Modulename": "Pester",
             "ModuleVersion": "3.3.14"
-        },
-        {
-            "ModuleName": "PoshSpec",
-            "ModuleVersion": "2.1.10"
         }
     ],
     "ArtefactsRequired":[
