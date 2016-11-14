@@ -19,7 +19,7 @@ PS Remotely workflow is as under :
 3. Drop the Pester tests (Describe blocks) as individual tests file on the remote node. Also copy the items defined in the Remotely.json, which are placed under Artefacts/ folder inside local Remotely folder.
 4. Invoke the tests using background jobs and output a JSON object back.
 
-Example - Basic
+Example 1 - Basic
 ============
 Already existing Pester test:
 
@@ -79,7 +79,7 @@ Output of the above is a JSON object :
 }
 ```
 
-Example - Use Configuration Data 
+Example 2 - Use Configuration Data 
 ============
 
 PS Remotely allows you to use DSC style configuration data for specifying the node configuration.
@@ -124,13 +124,131 @@ Remotely -Verbose -ConfigurationData $ConfigurationData {
 		        $Service.Status | Should be 'Running'
 	        }
         }
-
     }
+}
 ```
 
-Example - Use Configuration Data and specify credentials
+Another salient feature of PS Remotely is that you can pass a path to a .JSON or .psd1 file housing the configuration data.
+
+```powershell
+
+Remotely -Path C:\Remotely\Prod.ConfigData.json {
+	
+    Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
+		
+        # service test
+        Describe 'Service test' {
+		
+            $Service = Get-Service -Name $node.ServiceName
+            
+            It "Should have a service named bits" {
+                $Service | Should Not BeNullOrEmpty
+            }
+            
+            It 'Should be running' {
+                $Service.Status | Should be 'Running'
+            }
+        }
+    }
+}
+```
+
+Example 3 - Use Configuration Data and specify credentials [This has to be tested]
 ============
 
+PS Remotely allows you to specify credentials in the Configuration data along with passing a credential hash to the Remotely outside of the Configuration Data.
+
+
+```powershell
+$CredentialHash = @{
+    'AD' = $(New-Object -TypeName PSCredential -ArgumentList 'Administrator',(ConvertTo-SecureString -String 'DefaultPass' -AsPlainText -Force));
+    'WDS' = $(Import-CliXML -Path C:\Vault\WDS.Cred.xml)
+}
+
+Remotely -CredentialHash $CredentialHash {
+    Node AD, WDS {
+
+        Describe 'WinRM service tests' {
+
+            $Service = Get-Service -Name $node.ServiceName
+            
+            It "Should have a service named bits" {
+                $Service | Should Not BeNullOrEmpty
+            }
+            
+            It 'Should be running' {
+                $Service.Status | Should be 'Running'
+            }
+        }
+
+    }
+}
+```
+
+If you are using ConfigurationData then you can specify a note attribute named credential which gets picked up to open a PSSession to the remote node, which PS Remotely uses.
+[See RemoteSession.ps1 > Function CreateSessions]
+
+```powershell
+$ConfigurationData = @{
+	AllNodes = @(
+		@{
+			NodeName='*';
+			DomainFQDN='dexter.lab';
+            Credential = $(Get-Credential -UserName 'dexter\delegatedadmin' -Message 'Enter the creds for the delegatedadmin')
+		},
+		@{
+			NodeName='VM1';
+			ServiceName = 'bits';
+			Type='Compute';
+
+		},
+		@{
+			NodeName='VM2';
+			ServiceName = 'winrm';
+			Type='Storage';
+		}
+	)
+}
+
+Remotely -Verbose -ConfigurationData $ConfigurationData {
+	
+    Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
+		
+        # service test
+        Describe 'Service running test' {
+		
+	        $Service = Get-Service -Name $node.ServiceName
+
+	        It 'Should be running' {
+		        $Service.Status | Should be 'Running'
+	        }
+        }
+
+    }
+}
+```
+
+Example 4 - Specify a variable to Remotely which needs to be available on the remote nodes.
+============
+
+If you needed to make a variable available on the remote node during the invocation of the Pester 
+tests then you can specify these as a hashtable to the paramter -ArgumentList.
+
+```powershell
+Remotely -ArgumentList @{ServiceName='bits'} {
+    Node AD {
+
+        Describe "$ServiceName running test" {
+            $Service = Get-Service -Name $ServiceName
+
+	        It 'Should be running' {
+		        $Service.Status | Should be 'Running'
+	        }
+
+        }
+    }
+}
+```
 
 Links
 ============
