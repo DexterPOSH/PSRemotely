@@ -18,6 +18,7 @@ PS Remotely workflow is as under :
     - All the modules required are copied from the Lib/ folder to the remote node.
 3. Drop the Pester tests (Describe blocks) as individual tests file on the remote node. Also copy the items defined in the Remotely.json, which are placed under Artefacts/ folder inside local Remotely folder.
 4. Invoke the tests using background jobs and output a JSON object back.
+5. It also exports a global variable named $Remotely to which the Node bootstrap map and PSSession information is stored.
 
 Example 1 - Basic
 ============
@@ -60,8 +61,14 @@ Remotely {
 }
 
 ```
+Once you have the tests file reeady, below is how you invoke the PS Remotely framework : 
 
-Output of the above is a JSON object :
+```powershell
+Invoke-Remotely -Script <Path_to_Tests.ps1>
+```
+
+Output of the above is a JSON object, if the tests pass then an empty JSON object array of *TestResult* is returned 
+otherwise the Error record thrown by Pester is returned :
 
 ```json
 {
