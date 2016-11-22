@@ -6,6 +6,7 @@ pages:
   - PSRemotely Basics:
     - Quick Start: Quick-Start.-Installation-and-Example.md
     - PSDeploy Configuration Files: PSRemotely-Configuration-Files.md
+    - Remotely variable: PSRemotely-Remotely-Variable.md
   - PSRemotely Examples:
     - Basic : Example-Basic.md
     - Using Configuration Data Deployment: Example-ConfigurationData.md
