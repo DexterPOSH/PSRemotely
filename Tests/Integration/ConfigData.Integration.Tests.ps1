@@ -12,7 +12,7 @@ $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.Co
 $RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
 
 try {
-    Describe "Remotely ConfigData usage, with PS V$($PSVersion)" -Tag Integration {
+    Describe "PSRemotely ConfigData usage, with PS V$($PSVersion)" -Tag Integration {
         
         # Act, Invoke Remotely
         $Result = Invoke-Remotely -Script $RemotelyTestFile
