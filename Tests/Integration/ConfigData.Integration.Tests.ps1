@@ -1,6 +1,6 @@
 if(-not $ENV:BHProjectPath)
 {
-    Set-BuildEnvironment -Path $PSScriptRoot\..
+    Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
@@ -8,7 +8,7 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigData.PSRemotely.tests.ps1"
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigData.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
 
 try {
@@ -232,4 +232,5 @@ try {
 }
 catch {
     Clear-RemotelyNodePath
+    Clear-RemoteSession
 }

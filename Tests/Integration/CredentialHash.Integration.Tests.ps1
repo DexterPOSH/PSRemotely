@@ -1,6 +1,6 @@
 if(-not $ENV:BHProjectPath)
 {
-    Set-BuildEnvironment -Path $PSScriptRoot\..
+    Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
@@ -15,7 +15,7 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.CredentialHash.PSRemotely.tests.ps1"
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.CredentialHash.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
