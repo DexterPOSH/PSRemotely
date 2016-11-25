@@ -96,12 +96,13 @@ function CreateSessions
                 if( $Remotely.SessionHashTable.ContainsKey($Node.NodeName)) {
 					 #-or ($Remotely.SessionHashTable.ContainsKey("[$($Node.NodeName)]"))) 
                     # node present in the hash table, no need to create another session. Just re-intialize the variables in the session, added second condition for IPv6Addresse
-                    ReinitializeSession -SessionInfo $Remotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
+					ReinitializeSession -SessionInfo $Remotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
                 }
-                else { 
+                else {
+
+					 
 				    # SessionHashtable does not have an entry                              
-					$sessionName = "Remotely-" + $Node.NodeName 
-                    $PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
+					$sessionName = "Remotely-" + $Node.NodeName
 					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                     
 					if ($existingPSSession) {
                         # if there is an open PSSession to the node then use it to create Session info object
@@ -109,22 +110,28 @@ function CreateSessions
                         ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList	
 					}
                     else {
+						$PSSessionParams = @{
+							ComputerName = $Node.NodeName
+							Name = $("Remotely-{0}" -f $Node.NodeName)
+						}
+
 					    if ($node.Credential) {
 						    # if the node has a key called credential set then use it to create the pssession, First priroity
-                            [ValidateNotNullOrEmpty()]$session = New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $node.Credential -SessionOption $PSSessionOption
-                            [ValidateNotNullOrEmpty()]$credential = $node.Credential
-						    [ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
+							# Remove the Credential attribute from the Node data, it is not serializable to be sent using argument list
+							$PSSessionParams.Add('Credential',$node.Credential)
+							#$node.Remove('Credential')
+							$ArgumentList.Node.Remove('Credential')
 					    }
 					    elseif ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
-                            [ValidateNotNullOrEmpty()]$session = New-PSSession -ComputerName $Node.NodeName -Name $sessionName -Credential $CredentialHash[$node.NodeName] -SessionOption $PSSessionOption
-                            [ValidateNotNullOrEmpty()]$credential = $CredentialHash[$node.NodeName]
-						    $sessionInfo = CreateSessionInfo -Session $session -Credential $credential
+                            $PSSessionParams.Add('Credential',$($CredentialHash[$node.NodeName]))
 					    }
 					    else {
-						    $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
+						    #$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
 					    }
-					
-                        AddArgumentListtoSessionVars -session $sessionInfo.Session
+						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
+						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
+						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
+                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
                     }
 					$Remotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}

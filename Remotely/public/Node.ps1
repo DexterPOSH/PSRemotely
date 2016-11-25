@@ -85,9 +85,13 @@ Function Node {
 					}
 
 					# copy/overwrite the artefacts on the remotely nodes
-					Write-VerboseLog -Message "Copying artefacts on Node -> $nodeName"
-					Copy-Item -Path "$PSScriptRoot\..\Lib\Artefacts\*" -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session 
-
+					# TODO - Read the artefacts required from the $Remotely before copying them
+					Write-VerboseLog -Message "Copying required artefacts on Node -> $nodeName"
+					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artefacts\*" -Recurse | Where-Object -Filter {
+						@($Remotely.ArtefactsRequired) -contains $PSItem.Name } |
+						Foreach-Object -Process {
+							Copy-Item -Path $PSItem.FullName -Destination "$($Remotely.RemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session
+						}
 					#endregion copy the required tests file and artefacts
 					
 					# invoke the Pester tests
