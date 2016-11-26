@@ -5,6 +5,13 @@ if(-not $ENV:BHProjectPath)
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
+# Import the TestHelpers
+Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
+	Foreach-Object {
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue
+		Import-Module -Name $PSItem.FullName -Force
+	}
+
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.

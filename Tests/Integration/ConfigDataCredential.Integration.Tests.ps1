@@ -5,18 +5,18 @@ if(-not $ENV:BHProjectPath)
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
+# Import the TestHelpers
+Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
+	Foreach-Object {
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue# reload the module, the script module might have changes
+		Import-Module -Name $PSItem.FullName -Force
+	}
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
 
-# Import the TestHelpers
-Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
-	Foreach-Object {
-		Remove-Module -Name $PSitem.BaseName -Force # reload the module, the script module might have changes
-		Import-Module -Name $PSItem.FullName -Force
-	}
 
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
 New-User -Credential $UserCred 
