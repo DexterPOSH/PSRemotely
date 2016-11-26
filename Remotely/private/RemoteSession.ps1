@@ -118,12 +118,16 @@ function CreateSessions
 					    if ($node.Credential) {
 						    # if the node has a key called credential set then use it to create the pssession, First priroity
 							# Remove the Credential attribute from the Node data, it is not serializable to be sent using argument list
-							$PSSessionParams.Add('Credential',$node.Credential)
+							$Credential = $node.Credential
+							$PSSessionParams.Add('Credential',$Credential)
 							#$node.Remove('Credential')
 							$ArgumentList.Node.Remove('Credential')
+							
 					    }
 					    elseif ($CredentialHash -and $CredentialHash[$Node.NodeName]) {
-                            $PSSessionParams.Add('Credential',$($CredentialHash[$node.NodeName]))
+                            $Credential = $CredentialHash[$node.NodeName]
+							$PSSessionParams.Add('Credential',$Credential)
+							
 					    }
 					    else {
 						    #$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
@@ -131,7 +135,7 @@ function CreateSessions
 						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
 						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
 						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
-                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
+                        #ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
                     }
 					$Remotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
