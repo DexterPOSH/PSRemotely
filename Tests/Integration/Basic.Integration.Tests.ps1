@@ -8,7 +8,8 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
-		Import-Module -Name $PSItem.FullName
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue
+		Import-Module -Name $PSItem.FullName -Force
 	}
 
 
