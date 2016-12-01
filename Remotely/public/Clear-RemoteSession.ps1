@@ -5,6 +5,6 @@ function Clear-RemoteSession
     }
 
     $Global:Remotely.sessionHashTable.Clear()
-    $Global:Remotely.NodeMap.Clear()    
+    $Global:Remotely.NodeMap = @() # NodeMap is a collection, so clear() method does not work as expected
     
 }

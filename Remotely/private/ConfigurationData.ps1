@@ -81,7 +81,7 @@ Function LoadConfigDataFromFile {
 			break
 		}
 		'.psd1' {
-			$hashTable = Import-LocalizedData -Path $Path
+			Import-LocalizedData -BindingVariable hashTable -BaseDirectory $([System.IO.Path]::GetDirectoryName($Path)) -FileName $([System.IO.Path]::GetFileName($Path)) 
 			Write-Output -InputObject $hashTable
 		}
 		default {
