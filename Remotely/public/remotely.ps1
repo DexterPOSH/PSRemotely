@@ -14,7 +14,7 @@ function Remotely
         [hashtable] $configurationData,
 		
 		# Specify the path to a file (.json or .psd1) which houses the configuration data
-		[Parameter(Position=2, ParameterSetName='ConfigDataFromFile')]
+		[Parameter(Position=1, ParameterSetName='ConfigDataFromFile')]
 		[ValidateScript({ '.json','.psd1'  -contains $([System.IO.Path]::GetExtension($_))})] 
 		[ValidateScript({Test-Path -Path $_})]
 		[String]$Path,
