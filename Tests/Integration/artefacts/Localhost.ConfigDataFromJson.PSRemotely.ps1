@@ -9,11 +9,14 @@
      3. Create test PS Remotely test file <Name>.config.ps1 (e.g. localhost.basic.Tests.ps1).
 #>
 
+$ConfigTemplate = "$PSScriptRoot\ConfigData.Template.json"
+$JSONContent = Expand-ComputerName -Path $ConfigTemplate
+$JSONContent | Out-File -Path "$PSScriptRoot\ConfigData.json"
 # Configuration Data path
 $ConfigDataPath = "$PSScriptRoot\ConfigData.json"
 
 # Remotely tests
-Remotely -ConfigurationData $ConfigDataPath {
+Remotely -Path $ConfigDataPath {
 	Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
 		Describe 'Bits Service test' {
 			
