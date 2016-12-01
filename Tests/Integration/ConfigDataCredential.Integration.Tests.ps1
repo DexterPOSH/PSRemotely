@@ -71,7 +71,7 @@ try {
         } 
     }
 }
-catch {
+finally {
     Clear-RemotelyNodePath
     Remove-User -UserName PSRemotely
     Clear-RemoteSession
