@@ -237,6 +237,10 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                 It 'Should clear out Session Hashtable' {
                     $Global:Remotely.SessionHashTable | Should  BeNullOrEmpty
                 }
+
+                It 'Should clear out the NodeMap' {
+                    $Global:Remotely.NodeMap | Should BeNullOrEmpty
+                }
             }
         }
     }

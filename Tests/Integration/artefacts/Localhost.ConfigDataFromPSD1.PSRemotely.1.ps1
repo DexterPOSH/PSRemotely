@@ -13,7 +13,7 @@
 $ConfigDataPath = "$PSScriptRoot\ConfigData.psd1"
 
 # Remotely tests
-Remotely -ConfigurationData $ConfigDataPath {
+Remotely -Path $ConfigDataPath {
 	Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
 		Describe 'Bits Service test' {
 			
