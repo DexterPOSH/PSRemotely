@@ -166,3 +166,16 @@ Function Enable-LocalAccountTokenFilterPolicy {
     param()
     Set-ItemProperty -path HkLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\  -Name LocalAccountTokenFilterPolicy -Value 0
 }
+
+
+<#
+    Functions to replace the machine name in the .JSON or PSD1 files
+#>
+
+Function Expand-ComputerName {
+    param($Path)
+
+    $FileContent = Get-Content -Path $Path -Raw
+    $FileContent = $FileContent.Replace('$env:COMPUTERNAME',"$($env:COMPUTERNAME)")
+    $FileContent
+}
