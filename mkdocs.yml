@@ -10,9 +10,7 @@ pages:
     - PSRemotely workflow: PSRemotely-workflow.md
   - PSRemotely Examples:
     - Basic : Example-Basic.md
-    - Using Configuration Data Deployment: Example-ConfigurationData.md
-    - Using Configuration Data from a JSON file: Example-ConfigurationData-JSON.md
-    - Using Configuration Data from a .PSD1 file: Example-ConfigurationData-PSD1.md
+    - Using Configuration Data : Example-ConfigurationData.md
     - Using Configuration Data and Credential Hashtable: Example-ConfigurationData-CredentialHash.md
     - Using Configuration Data and Credential : Example-ConfigurationData-Credential.md
     - Using custom Variables : Example-Custom-Variables.md
