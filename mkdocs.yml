@@ -11,12 +11,13 @@ pages:
   - PSRemotely Examples:
     - Basic : Example-Basic.md
     - Using Configuration Data : Example-ConfigurationData.md
-    - Using Configuration Data and Credential Hashtable: Example-ConfigurationData-CredentialHash.md
+    - Using Credential Hashtable: Example-CredentialHash.md
     - Using Configuration Data and Credential : Example-ConfigurationData-Credential.md
     - Using custom Variables : Example-Custom-Variables.md
   - How Do I...:
-    - Invoke Remotely: Invoke-Remotely.md
+    - Invoke PSRemotely: Invoke-Remotely.md
     - TroubleShoot : PSRemotely.TroubleShoot.md
-    - Copy Artifacts to Remotely Nodes: PSRemotely.Artifacts.md
+    - Copy Artifacts to PSRemotely Nodes: PSRemotely.Artifacts.md
+    - Debug failures : PSRemotely.Debug.md
   - Advanced:
     - Using PoshSpec with PSRemotely: PSRemotely-PoshSpec.md

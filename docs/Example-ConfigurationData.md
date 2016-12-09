@@ -89,6 +89,7 @@ Contents of the dev_environment.psd1 file :-
 			Type='Storage';
 		}
 	)
+}
 ```
 Now the path can be passed to the PSRemotely file as a parameter. Below are the contents of ConfigData_with_psd1.PSRemotely.ps1 :-
 
