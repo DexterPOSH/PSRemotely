@@ -47,7 +47,7 @@ Function Node {
 							else {
 								# run the bootstrap function
 								Write-VerboseLog -Message "$($sessioninfo.Session.ComputerName) is NOT bootstrapped. Trying now."
-								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $PSRemotely.modulesRequired -RemotelyNodePath $PSRemotely.remotelyNodePath
+								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $PSRemotely.modulesRequired -PSRemotelyNodePath $PSRemotely.PSRemotelyNodePath
 							}
 						}
 						$sessions = Get-RemoteSession
@@ -90,7 +90,7 @@ Function Node {
 					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artefacts\*" -Recurse | Where-Object -Filter {
 						@($PSRemotely.ArtefactsRequired) -contains $PSItem.Name } |
 						Foreach-Object -Process {
-							Copy-Item -Path $PSItem.FullName -Destination "$($PSRemotely.RemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session
+							Copy-Item -Path $PSItem.FullName -Destination "$($PSRemotely.PSRemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session
 						}
 					#endregion copy the required tests file and artefacts
 					
@@ -105,15 +105,15 @@ Function Node {
 						Foreach {
 							$moduleName = $PSitem.ModuleName
 							$moduleVersion = $Psitem.ModuleVersion
-							Import-Module "$($PSRemotely.remotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
+							Import-Module "$($PSRemotely.PSRemotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 							Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from PSRemotely lib folder"
 						}
-						#$nodeOutputFile = "{0}\{1}.xml" -f $($PSRemotely.remotelyNodePath), $Env:ComputerName
+						#$nodeOutputFile = "{0}\{1}.xml" -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName
 						$invokePesterParams = @{
 							PassThru = $True;
 							Quiet = $True;
 							OutputFormat = 'NunitXML';
-							OutputFile = '{0}\{1}.xml' -f $($PSRemotely.remotelyNodePath), $Env:ComputerName;
+							OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName;
 						}
 						# invoke pester now to run all the tests
 						if ($Tag) {
@@ -122,10 +122,10 @@ Function Node {
 						}
 						Write-Verbose -Verbose -Message  "Invoking Pester with arguments $($invokePesterParams.GetEnumerator() | % {$_.Key, $_.Value})"
 						if ($Node) {
-								Invoke-Pester -Script @{Path="$($PSRemotely.remotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} @invokePesterParams
+								Invoke-Pester -Script @{Path="$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} @invokePesterParams
 							}
 							else {
-								Invoke-Pester -Script "$($PSRemotely.remotelyNodePath)\*.tests.ps1" @invokePesterParams
+								Invoke-Pester -Script "$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1" @invokePesterParams
 							}
 					} -ArgumentList $PSRemotely, $Tag -AsJob 
 				}

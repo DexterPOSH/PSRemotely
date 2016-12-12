@@ -62,8 +62,8 @@ Function Invoke-PSRemotely {
                             foreach ($test in @($Object.Tests.Name)) {
                                 Write-Verbose -Message "Processing $test" -Verbose
                                 $testFileName = "{0}.{1}.Tests.ps1" -f $env:ComputerName, $test.replace(' ','_')
-                                $testFile = "$($Global:PSRemotely.remotelyNodePath)\$testFileName"
-                                $outPutFile = "{0}\{1}.{2}.xml" -f 	 $PSRemotely.remotelyNodePath, $nodeName, $testName
+                                $testFile = "$($Global:PSRemotely.PSRemotelyNodePath)\$testFileName"
+                                $outPutFile = "{0}\{1}.{2}.xml" -f 	 $PSRemotely.PSRemotelyNodePath, $nodeName, $testName
                                 if ($Node) {
                                     Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
                                 }

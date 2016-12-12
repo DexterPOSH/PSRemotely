@@ -1,5 +1,5 @@
 {
-    "RemotelyNodePath": "C:\\Temp\\PSRemotely",
+    "PSRemotelyNodePath": "C:\\Temp\\PSRemotely",
     "modulesRequired": [
         {
             "Modulename": "Pester",

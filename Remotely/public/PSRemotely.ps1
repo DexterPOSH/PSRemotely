@@ -87,13 +87,13 @@ function PSRemotely
 								# In memory Node map, has the node marked as bootstrapped
 								Write-VerboseLog -Message "$($sessionInfo.Session.Computername) is bootstrapped."
 								# archive the existing tests files on the PSRemotely node
-								Write-VerboseLog -Message "Cleaning up $($PSRemotely.remotelyNodePath) on Node -> $($sessionInfo.Session.ComputerName)"
-								CleanupRemotelyNodePath -Session $sessionInfo.session -RemotelyNodePath $PSRemotely.remotelyNodePath
+								Write-VerboseLog -Message "Cleaning up $($PSRemotely.PSRemotelyNodePath) on Node -> $($sessionInfo.Session.ComputerName)"
+								CleanupRemotelyNodePath -Session $sessionInfo.session -PSRemotelyNodePath $PSRemotely.PSRemotelyNodePath
 							}
 							else {
 								# run the bootstrap function
 								Write-VerboseLog -Message "$($sessioninfo.Session.ComputerName) is NOT bootstrapped. Trying now."
-								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $PSRemotely.modulesRequired -RemotelyNodePath $PSRemotely.remotelyNodePath
+								BootstrapRemotelyNode -Session $sessionInfo.Session -FullyQualifiedName $PSRemotely.modulesRequired -PSRemotelyNodePath $PSRemotely.PSRemotelyNodePath
 							}
 						}
 					}

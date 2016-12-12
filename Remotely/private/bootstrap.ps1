@@ -76,7 +76,7 @@ Function BootstrapRemotelyNode {
         [Microsoft.PowerShell.Commands.ModuleSpecification[]]$FullyQualifiedName,
 
 		[Parameter()]
-		[String]$remotelyNodePath
+		[String]$PSRemotelyNodePath
     )
     # at the beginning read the status of the node
 	$ModuleStatus, $pathStatus = TestRemotelyNode @PSBoundParameters
@@ -86,8 +86,8 @@ Function BootstrapRemotelyNode {
     if ($pathStatus -and $($moduleStatus.Values -notcontains $False)) {
         # Node is already bootstrapped, no need to take action
         # archive the existing tests files on the PSRemotely node
-        Write-VerboseLog -Message "Cleaning up $remotelyNodePath on Node -> $($Session.ComputerName)"
-        CleanupRemotelyNodePath -Session $session -RemotelyNodePath $remotelyNodePath
+        Write-VerboseLog -Message "Cleaning up $PSRemotelyNodePath on Node -> $($Session.ComputerName)"
+        CleanupPSRemotelyNodePath -Session $session -PSRemotelyNodePath $PSRemotelyNodePath
     }
     else {
         # Node is missing some of the configs, bootstrap it
@@ -105,12 +105,12 @@ Function BootstrapRemotelyNode {
         if ($pathStatus) {
             # PSRemotely node path created
             # archive the existing tests files on the PSRemotely node
-            Write-VerboseLog -Message "Cleaning up $remotelyNodePath on Node -> $($Session.ComputerName)"
-            CleanupRemotelyNodePath -Session $session -RemotelyNodePath $remotelyNodePath
+            Write-VerboseLog -Message "Cleaning up $PSRemotelyNodePath on Node -> $($Session.ComputerName)"
+            CleanupPSRemotelyNodePath -Session $session -PSRemotelyNodePath $PSRemotelyNodePath
             
         }
         else {
-            CreateRemotelyNodePath	-session $session -Path $remotelyNodePath
+            CreatePSRemotelyNodePath	-session $session -Path $PSRemotelyNodePath
         }
 
         # at the end update the status of the node
@@ -131,22 +131,22 @@ Function TestRemotelyNode {
         [Microsoft.PowerShell.Commands.ModuleSpecification[]]$FullyQualifiedName,
 
 		[Parameter()]
-		[String]$remotelyNodePath
+		[String]$PSRemotelyNodePath
     )
     
-    Invoke-Command -Session $session -ArgumentList $FullyQualifiedName,$remotelyNodePath -ScriptBlock {
+    Invoke-Command -Session $session -ArgumentList $FullyQualifiedName,$PSRemotelyNodePath -ScriptBlock {
 		param(
 			$FullyQualifiedName,
-			$remotelyNodePath
+			$PSRemotelyNodePath
 		)
         $outputHash = @{} 
 		$FullyQualifiedName | Foreach-Object -Process {$outputHash.Add($PSItem.Name, $false)	}
 
-        if (Test-Path -path "$remotelyNodePath\Lib\Artefacts" -PathType Container) {
+        if (Test-Path -path "$PSRemotelyNodePath\Lib\Artefacts" -PathType Container) {
 		    foreach($module in $FullyQualifiedName) {
                 $moduleName=$module.Name
                 $moduleVersion=$module.version
-                if(Test-Path -Path "$remotelyNodePath\lib\$moduleName\$moduleVersion") {
+                if(Test-Path -Path "$PSRemotelyNodePath\lib\$moduleName\$moduleVersion") {
                     # module present
                     $outputHash[$($module.Name)] = $true
                 }
@@ -165,7 +165,7 @@ Function TestRemotelyNode {
 	} 
 }
 
-Function CreateRemotelyNodePath {
+Function CreatePSRemotelyNodePath {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -207,7 +207,7 @@ Function CopyRemotelyNodeModule {
     TRY {
         if (testModulePresentInLib -FullyQualifiedName $FullyQualifiedName) {
             $LibPath  = Resolve-Path -Path $PSScriptRoot\..\lib | Select-Object -ExpandProperty Path
-            CopyModuleFolderToRemotelyNode -path "$LibPath\$moduleName\$moduleVersion" -Destination "$($PSRemotely.remotelyNodePath)\lib\$moduleName" -session $session -ErrorAction Stop
+            CopyModuleFolderToRemotelyNode -path "$LibPath\$moduleName\$moduleVersion" -Destination "$($PSRemotely.PSRemotelyNodePath)\lib\$moduleName" -session $session -ErrorAction Stop
         }
         else {
             throw "Lib folder does not have a folder named $($moduleName)\$($moduleVersion), so it can't be copied to the PSRemotely node."
@@ -265,7 +265,7 @@ Function CopyTestsFileToRemotelyNode {
             )
             # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
             $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
-            $testFile = "$($PSRemotely.remotelyNodePath)\$testFileName"
+            $testFile = "$($PSRemotely.PSRemotelyNodePath)\$testFileName"
             if ($Node) { 
                 # Check if the $Node var was populated in the remote session, then add param node to the test block
                 $testBlock = $testBlock.Insert(0,"param(`$node)`n")
@@ -276,18 +276,18 @@ Function CopyTestsFileToRemotelyNode {
     Invoke-Command @copyTestsFileParams 
 }
 
-Function CleanupRemotelyNodePath {
+Function CleanupPSRemotelyNodePath {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [System.Management.Automation.Runspaces.PSSession]$session,
 
         [Parameter(Mandatory)]
-        [String]$RemotelyNodePath
+        [String]$PSRemotelyNodePath
     )
     $cleanupParams = @{
         'Session' = $session;
-        'ArgumentList' = $RemotelyNodePath
+        'ArgumentList' = $PSRemotelyNodePath
         'ScriptBlock' = {
             param([String]$path)
 
