@@ -157,12 +157,12 @@ Function Start-RemotelyJobProcessing {
 
                 if ($allJobsCompletedHash[$enum.key]) {
                     # means job was processed
-                    Write-VerboseLog -Message "Remotely job already processed for Node -> $(($enum.key).Location )"
+                    Write-VerboseLog -Message "PSRemotely job already processed for Node -> $(($enum.key).Location )"
                 }
                 else {
                     # see if the job finished
                     if ($enum.Key | Where -Property State -In @('Completed','Failed')) {
-                        Write-VerboseLog -Message "Remotely job completed/failed for Node -> $(($enum.key).Location ) . Processing it now."
+                        Write-VerboseLog -Message "PSRemotely job completed/failed for Node -> $(($enum.key).Location ) . Processing it now."
                         $enum.Key | ProcessRemotelyJob | ProcessRemotelyOutputToJSOn
                         $allJobsCompletedHash[$enum.key] = $true # set the job processed status to True
                     }
@@ -170,7 +170,7 @@ Function Start-RemotelyJobProcessing {
             }
         
             # induce delay of 2 seconds
-            Write-VerboseLog -Message 'Remotely jobs still running, sleep for 5 seconds'
+            Write-VerboseLog -Message 'PSRemotely jobs still running, sleep for 5 seconds'
             Start-Sleep -Seconds 5
 
         } until (@($allJobsCompletedHash.Values) -notcontains $False)
