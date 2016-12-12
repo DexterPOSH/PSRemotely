@@ -76,7 +76,7 @@ Function Node {
 					Write-VerboseLog -Message "Fetching the test name & test block targeted at Node -> $nodeName"
 					$testNameandTestBlockArray = @(Get-TestNameAndTestBlock -Content $testBlock) # this returns the Describe block name and the body as string
 					
-					#region copy the required tests file and artefacts
+					#region copy the required tests file and Artifacts
 					Write-VerboseLog -Message "Copying tests file to the Node -> $nodeName"
 					$testNameandTestBlockArray | Foreach-Object -Process {
 						# Copy each tests file to the remote node.
@@ -84,15 +84,15 @@ Function Node {
 						CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
 					}
 
-					# copy/overwrite the artefacts on the PSRemotely nodes
-					# TODO - Read the artefacts required from the $PSRemotely before copying them
-					Write-VerboseLog -Message "Copying required artefacts on Node -> $nodeName"
-					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artefacts\*" -Recurse | Where-Object -Filter {
-						@($PSRemotely.ArtefactsRequired) -contains $PSItem.Name } |
+					# copy/overwrite the Artifacts on the PSRemotely nodes
+					# TODO - Read the Artifacts required from the $PSRemotely before copying them
+					Write-VerboseLog -Message "Copying required Artifacts on Node -> $nodeName"
+					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artifacts\*" -Recurse | Where-Object -Filter {
+						@($PSRemotely.ArtifactsRequired) -contains $PSItem.Name } |
 						Foreach-Object -Process {
-							Copy-Item -Path $PSItem.FullName -Destination "$($PSRemotely.PSRemotelyNodePath)\Lib\Artefacts" -Force -Recurse -ToSession $session
+							Copy-Item -Path $PSItem.FullName -Destination "$($PSRemotely.PSRemotelyNodePath)\Lib\Artifacts" -Force -Recurse -ToSession $session
 						}
-					#endregion copy the required tests file and artefacts
+					#endregion copy the required tests file and Artifacts
 					
 					# invoke the Pester tests
 					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."

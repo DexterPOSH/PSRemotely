@@ -142,7 +142,7 @@ Function TestRemotelyNode {
         $outputHash = @{} 
 		$FullyQualifiedName | Foreach-Object -Process {$outputHash.Add($PSItem.Name, $false)	}
 
-        if (Test-Path -path "$PSRemotelyNodePath\Lib\Artefacts" -PathType Container) {
+        if (Test-Path -path "$PSRemotelyNodePath\Lib\Artifacts" -PathType Container) {
 		    foreach($module in $FullyQualifiedName) {
                 $moduleName=$module.Name
                 $moduleVersion=$module.version
@@ -175,7 +175,7 @@ Function CreatePSRemotelyNodePath {
         [String]$Path
     )
     Invoke-Command -Session $session -ScriptBlock {
-        $null = New-Item -Path "$using:Path\lib\artefacts" -ItemType Directory -Force
+        $null = New-Item -Path "$using:Path\lib\Artifacts" -ItemType Directory -Force
     }
 }
 

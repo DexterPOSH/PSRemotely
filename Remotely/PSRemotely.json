@@ -6,7 +6,7 @@
             "ModuleVersion": "3.3.14"
         }
     ],
-    "ArtefactsRequired":[
+    "ArtifactsRequired":[
        "DeploymentManifest.xml" 
     ]
 }
