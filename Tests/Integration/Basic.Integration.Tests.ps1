@@ -15,14 +15,14 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.basic.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.PSRemotely.ps1"
+$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 
 try {
 	Describe "PSRemotely Basic usage, with PS V$($PSVersion)" -Tag Integration {
 	
 		# Act, Invoke Remotely
-		$Result = Invoke-Remotely -Script $RemotelyTestFile
+		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 		$RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 		# Assert
 
@@ -68,7 +68,7 @@ try {
 
 		# Test if the PSSession was opened to the node
 		Context 'Validate that PSSession was created for the Remotely node' {
-			$Session = Get-PSSession -Name Remotely-Localhost -ErrorAction SilentlyContinue
+			$Session = Get-PSSession -Name PSRemotely-Localhost -ErrorAction SilentlyContinue
 
 			It 'Should have opened a PSSession to the Node' {
 				$Session | Should NOT BeNullOrEmpty	
@@ -79,9 +79,9 @@ try {
 			}
 		}
 
-		# Test if the required modules & artefacts were copied to the Remotely node
-		Context '[BootStrap] Validate the RemotelyNodePath has modules & artefacts copied' {
-			# In this context validate that the required modules and artefacts were copied to the Node
+		# Test if the required modules & artifacts were copied to the Remotely node
+		Context '[BootStrap] Validate the RemotelyNodePath has modules & artifacts copied' {
+			# In this context validate that the required modules and artifacts were copied to the Node
 
 			It 'Should create RemotelyNodePath on the Node' {
 				$Global:Remotely.RemotelyNodePath | Should Exist
@@ -94,10 +94,10 @@ try {
 				})
 			}
 
-			It 'Should copy the required artefacts in RemotelyNodePath' {
-				"$($Global:Remotely.RemotelyNodePath)\lib\artefacts" | Should Exist
+			It 'Should copy the required artifacts in RemotelyNodePath' {
+				"$($Global:Remotely.RemotelyNodePath)\lib\artifacts" | Should Exist
 				$Global:Remotely.ArtefactsRequired.ForEach({
-					"$($Global:Remotely.RemotelyNodePath)\lib\artefacts\$($PSItem)" | Should Exist
+					"$($Global:Remotely.RemotelyNodePath)\lib\artifacts\$($PSItem)" | Should Exist
 				})
 			}
 		}

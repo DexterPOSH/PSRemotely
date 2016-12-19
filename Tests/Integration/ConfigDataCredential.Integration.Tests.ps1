@@ -8,14 +8,14 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
-		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue# reload the module, the script module might have changes
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue # reload the module, the script module might have changes
 		Import-Module -Name $PSItem.FullName -Force
 	}
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-# PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
+# PSRemotely Test file to be used for this Integration test.
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
+$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 
 
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
@@ -27,15 +27,15 @@ Disable-LocalAccountTokenFilterPolicy
 try {
     Describe "PSRemotely ConfigData with Credential usage, with PS V$($PSVersion)" -Tag Integration {
         
-        # Act, Invoke Remotely
-        $Result = Invoke-Remotely -Script @{
+        # Act, Invoke PSRemotely
+        $Result = Invoke-PSRemotely -Script @{
             Path=$RemotelyTestFile;
             Parameters= @{Credential=$UserCred}
         }
         # Assert
         # Test if the PSSession was opened to the node using the supplied credential
-		Context 'Validate that PSSession was created for the Remotely node using supplied CredentialHash' {
-			$SessionHash = $Global:Remotely.SessionHashtable["$env:COMPUTERNAME"]
+		Context 'Validate that PSSession was created for the PSRemotely node using supplied CredentialHash' {
+			$SessionHash = $Global:PSRemotely.SessionHashtable["$env:COMPUTERNAME"]
 
 			It 'Should have opened a PSSession to the Node' {
 				$SessionHash.Session | Should NOT BeNullOrEmpty	
@@ -52,7 +52,7 @@ try {
 		}
 
         Context 'Node data should Be populated in the Node PSSession' {
-            $NodePSSession =  $Global:Remotely.SessionHashtable["$env:COMPUTERNAME"].session
+            $NodePSSession =  $Global:PSRemotely.SessionHashtable["$env:COMPUTERNAME"].session
             $NodeResult = Invoke-Command -Session $NodePSSession -ScriptBlock {return $Node}
             
             It "Should have `$Node variable defined in the Remote PSSession" {
