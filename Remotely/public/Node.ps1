@@ -87,7 +87,7 @@ Function Node {
 					# copy/overwrite the Artifacts on the PSRemotely nodes
 					# TODO - Read the Artifacts required from the $PSRemotely before copying them
 					Write-VerboseLog -Message "Copying required Artifacts on Node -> $nodeName"
-					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artifacts\*" -Recurse | Where-Object -Filter {
+					Get-ChildItem -Path "$PSScriptRoot\..\Lib\Artifacts\*" -Recurse -ErrorAction SilentlyContinue | Where-Object -Filter {
 						@($PSRemotely.ArtifactsRequired) -contains $PSItem.Name } |
 						Foreach-Object -Process {
 							Copy-Item -Path $PSItem.FullName -Destination "$($PSRemotely.PSRemotelyNodePath)\Lib\Artifacts" -Force -Recurse -ToSession $session
