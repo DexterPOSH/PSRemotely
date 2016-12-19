@@ -5,7 +5,7 @@
 			DomainFQDN='dexter.lab';
 		},
 		@{
-			NodeName="$env:ComputerName";
+			NodeName="$env:COMPUTERNAME";
 			ServiceName = 'bits';
 			Type='Compute';
 

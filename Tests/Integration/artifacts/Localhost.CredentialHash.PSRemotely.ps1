@@ -1,6 +1,6 @@
-<#
+﻿<#
 .Synopsis
-   Example demonstrating use of PS Remotely with Credential Hash
+   Example demonstrating use of PSRemotely with Credential Hash
 .DESCRIPTION
    This is a straight forward example showing how to use PS Remotely DSL.
    To Use:
@@ -12,8 +12,8 @@ param($CredentialHash)
 
 
 # Remotely tests
-Remotely -credentialHash $CredentialHash {
-	Node "$env:ComputerName" {
+PSRemotely -credentialHash $CredentialHash {
+	Node "$env:COMPUTERNAME" {
 		Describe 'Bits Service test' {
 			
 			$Service = Get-Service -Name 'bits'
