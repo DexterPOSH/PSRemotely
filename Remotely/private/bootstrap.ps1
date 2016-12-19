@@ -1,4 +1,4 @@
-Function UpdatePSRemotelyNodeMap {
+Function UpdateRemotelyNodeMap {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
