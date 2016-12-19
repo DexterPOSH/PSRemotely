@@ -60,15 +60,15 @@ function CreateSessions
     )
 
 	# try to see if there are already open PSSessions, which are available
-	$existingPSSessions = @(Get-PSSession -Name Remotely* | Where-Object -FilterScript { ($PSitem.State -eq 'Opened') -and ($PSitem.Availability -eq 'available')})
+	$existingPSSessions = @(Get-PSSession -Name PSRemotely* | Where-Object -FilterScript { ($PSitem.State -eq 'Opened') -and ($PSitem.Availability -eq 'available')})
 	Switch -Exact ($PSCmdlet.ParameterSetName) {
 		'ComputerName' {
 			
 			foreach($Node in $Nodes)
 			{ 
-				if(-not $Remotely.SessionHashTable.ContainsKey($Node))
+				if(-not $PSRemotely.SessionHashTable.ContainsKey($Node))
 				{                                   
-					$sessionName = "Remotely-" + $Node 
+					$sessionName = "PSRemotely-" + $Node 
 					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                        
 					if ($existingPSSession) {
 						$sessionInfo = CreateSessionInfo -Session $existingPSSession	
@@ -81,7 +81,7 @@ function CreateSessions
 							$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
 						}
 					}
-					$Remotely.SessionHashTable.Add($node, $sessionInfo)              
+					$PSRemotely.SessionHashTable.Add($node, $sessionInfo)              
 				}               
 			}
 			break
@@ -93,16 +93,16 @@ function CreateSessions
 				$argumentList = $Script:argumentList.clone()
 				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
 				
-                if( $Remotely.SessionHashTable.ContainsKey($Node.NodeName)) {
-					 #-or ($Remotely.SessionHashTable.ContainsKey("[$($Node.NodeName)]"))) 
+                if( $PSRemotely.SessionHashTable.ContainsKey($Node.NodeName)) {
+					 #-or ($PSRemotely.SessionHashTable.ContainsKey("[$($Node.NodeName)]"))) 
                     # node present in the hash table, no need to create another session. Just re-intialize the variables in the session, added second condition for IPv6Addresse
-					ReinitializeSession -SessionInfo $Remotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
+					ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
                 }
                 else {
 
 					 
 				    # SessionHashtable does not have an entry                              
-					$sessionName = "Remotely-" + $Node.NodeName
+					$sessionName = "PSRemotely-" + $Node.NodeName
 					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                     
 					if ($existingPSSession) {
                         # if there is an open PSSession to the node then use it to create Session info object
@@ -112,7 +112,7 @@ function CreateSessions
                     else {
 						$PSSessionParams = @{
 							ComputerName = $Node.NodeName
-							Name = $("Remotely-{0}" -f $Node.NodeName)
+							Name = $("PSRemotely-{0}" -f $Node.NodeName)
 						}
 
 					    if ($node.Credential) {
@@ -135,9 +135,9 @@ function CreateSessions
 						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
 						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
 						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
-                        #ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
+                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
                     }
-					$Remotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
+					$PSRemotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
 				
 			}
@@ -153,10 +153,10 @@ function CreateLocalSession
         [Parameter(Position=0)] $Node = 'localhost'
     )
 
-    if(-not $Remotely.SessionHashTable.ContainsKey($Node))
+    if(-not $PSRemotely.SessionHashTable.ContainsKey($Node))
     {
         $sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName)
-        $Remotely.SessionHashTable.Add($Node, $sessionInfo)
+        $PSRemotely.SessionHashTable.Add($Node, $sessionInfo)
     } 
 }
 

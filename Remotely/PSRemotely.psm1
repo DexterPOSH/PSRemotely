@@ -1,5 +1,5 @@
-﻿# read the Remotely.json file
-$jsonObject = ConvertFrom-Json -InputObject $(Get-Content -Path "$PSScriptRoot\Remotely.Json" -Raw -ErrorAction SilentlyContinue) -ErrorAction SilentlyContinue
+﻿# read the PSRemotely.json file
+$jsonObject = ConvertFrom-Json -InputObject $(Get-Content -Path "$PSScriptRoot\PSRemotely.Json" -Raw -ErrorAction SilentlyContinue) -ErrorAction SilentlyContinue
 #Get public and private function definition files.
     $public  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
     $private = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
@@ -21,12 +21,15 @@ $jsonObject = ConvertFrom-Json -InputObject $(Get-Content -Path "$PSScriptRoot\R
     # Read in or create an initial config file and variable
     # Export Public functions ($Public.BaseName) for WIP modules
     # Set variables visible to the module and its functions only
-# read the remotely.json file 
+# read the PSRemotely.json file 
 
-$Remotely = ConvertPSObjectToHashTable -InputObject $jsonObject
+$PSRemotely = ConvertPSObjectToHashTable -InputObject $jsonObject
 
 # module variables
-$Remotely.Add('NodeMap', @())
-$Remotely.Add('sessionHashTable', @{})
+$PSRemotely.Add('NodeMap', @())
+$PSRemotely.Add('sessionHashTable', @{})
 
-Export-ModuleMember -Function $Public.Basename -Variable Remotely
+# create an alias for PSRemotely
+New-Alias -Name Remotely -Value PSRemotely -Description "Remote Ops validation, using Remotely."
+
+Export-ModuleMember -Function $Public.Basename -Variable PSRemotely
