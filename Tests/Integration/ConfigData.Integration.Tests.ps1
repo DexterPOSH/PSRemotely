@@ -1,4 +1,4 @@
-if(-not $ENV:BHProjectPath)
+﻿if(-not $ENV:BHProjectPath)
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
@@ -14,34 +14,34 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-# PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigData.PSRemotely.ps1",
-                        "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigDataFromJSON.PSRemotely.ps1",
-                        "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.ConfigDataFromPSD1.PSRemotely.ps1")
-$RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
+# PSRemotely Test file to be used for this Integration test.
+$RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigData.PSRemotely.ps1",
+                        "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromJSON.PSRemotely.ps1",
+                        "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromPSD1.PSRemotely.ps1")
+$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 
 Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
     try {
-        Describe "PSRemotely ConfigData usage, with PS V$($PSVersion)" -Tag Integration {
+        Describe "PSRemotely $([System.IO.Path]::GetFileName($RemotelyTestFile)) usage, with PS V$($PSVersion)" -Tag Integration {
             
-            # Act, Invoke Remotely
-            $Result = Invoke-Remotely -Script $RemotelyTestFile
+            # Act, Invoke PSRemotely
+            $Result = Invoke-PSRemotely -Script $RemotelyTestFile
             $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
             # Assert
 
-            # First verify that all the Node related details are stored in the Remotely global var
-            Context 'Global Variable Remotely validation' {
+            # First verify that all the Node related details are stored in the PSRemotely global var
+            Context 'Global Variable PSRemotely validation' {
                 
-                It "Should check if the global variable Remotely exists" {
-                    $Global:Remotely | Should NOT BeNullOrEmpty
+                It "Should check if the global variable PSRemotely exists" {
+                    $Global:PSRemotely | Should NOT BeNullOrEmpty
                 }
 
-                It 'Should check if the RemotelyNodePath was picked from the Remotely.JSON' {
-                    $Global:Remotely.RemotelyNodePath | Should Be $RemotelyConfig.RemotelyNodePath
+                It 'Should check if the PSRemotelyNodePath was picked from the PSRemotely.JSON' {
+                    $Global:PSRemotely.PSRemotelyNodePath | Should Be $RemotelyConfig.PSRemotelyNodePath
                 }
 
-                It 'Should check if the ModulesRequired was picked from the Remotely.JSON' {
-                    foreach ($module in $Global:Remotely.ModulesRequired) {
+                It 'Should check if the ModulesRequired was picked from the PSRemotely.JSON' {
+                    foreach ($module in $Global:PSRemotely.ModulesRequired) {
                         $moduleInConfig = $RemotelyConfig.ModulesRequired.Where({$module['ModuleName']})
                         $module['ModuleName'] | Should BeExactly $moduleInConfig.ModuleName
                         $module['ModuleVersion'] | Should BeExactly $moduleInConfig.ModuleVersion
@@ -49,38 +49,38 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                 }
 
                 It 'Should have a NodeMap for the Nodes created' {
-                    $Global:Remotely.NodeMap.count | Should Be 2
-                    $Global:Remotely.NodeMap.Where({$_.NodeName -eq 'localhost'}) | Should Be $True
-                    $Global:Remotely.NodeMap.Where({$_.NodeName -eq "$env:ComputerName"}) | Should Be $True
+                    $Global:PSRemotely.NodeMap.count | Should Be 2
+                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq 'localhost'}) | Should Be $True
+                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq "$env:ComputerName"}) | Should Be $True
                 }
 
-                It 'Should have the PathStatus true for the NodeMap (implies the RemotelyNodePath exists)' {
-                    $Global:Remotely.NodeMap[0].PathStatus | Should Be $True
-                    $Global:Remotely.NodeMap[1].PathStatus | Should Be $True
+                It 'Should have the PathStatus true for the NodeMap (implies the PSRemotelyNodePath exists)' {
+                    $Global:PSRemotely.NodeMap[0].PathStatus | Should Be $True
+                    $Global:PSRemotely.NodeMap[1].PathStatus | Should Be $True
                 }
 
-                It 'Should have the ModuleStatus true for the Node (implies all modules were copied to the Remotely Node)' {
-                    $Global:Remotely.NodeMap[0].ModuleStatus.Keys.ForEach({
-                        $Global:Remotely.NodeMap[0].ModuleStatus["$PSitem"] | Should Be $true
+                It 'Should have the ModuleStatus true for the Node (implies all modules were copied to the PSRemotely Node)' {
+                    $Global:PSRemotely.NodeMap[0].ModuleStatus.Keys.ForEach({
+                        $Global:PSRemotely.NodeMap[0].ModuleStatus["$PSitem"] | Should Be $true
                     })
 
-                    $Global:Remotely.NodeMap[1].ModuleStatus.Keys.ForEach({
-                        $Global:Remotely.NodeMap[1].ModuleStatus["$PSitem"] | Should Be $true
+                    $Global:PSRemotely.NodeMap[1].ModuleStatus.Keys.ForEach({
+                        $Global:PSRemotely.NodeMap[1].ModuleStatus["$PSitem"] | Should Be $true
                     })
                 }
 
                 It 'Should maintain a PSSession Hashtable to the nodes' {
-                    $Global:Remotely.SessionHashTable | Should NOT BeNullOrEmpty
-                    $Global:Remotely.SessionHashTable.Count | Should Be 2
-                    $Global:Remotely.SessionHashTable.ContainsKey('Localhost') | Should Be $True
-                    $Global:Remotely.SessionHashTable.ContainsKey("$env:ComputerName") | Should Be $True
+                    $Global:PSRemotely.SessionHashTable | Should NOT BeNullOrEmpty
+                    $Global:PSRemotely.SessionHashTable.Count | Should Be 2
+                    $Global:PSRemotely.SessionHashTable.ContainsKey('Localhost') | Should Be $True
+                    $Global:PSRemotely.SessionHashTable.ContainsKey("$env:ComputerName") | Should Be $True
                 }
                 
             }
 
             # Test if the PSSession was opened to the node
-            Context 'Validate that PSSession was created for the Remotely node' {
-                $Sessions = Get-PSSession -Name "Remotely-*" -ErrorAction SilentlyContinue
+            Context 'Validate that PSSession was created for the PSRemotely node' {
+                $Sessions = Get-PSSession -Name "PSRemotely-*" -ErrorAction SilentlyContinue
 
                 It 'Should have opened a PSSession to the Node' {
                     $Sessions | Should NOT BeNullOrEmpty	
@@ -92,39 +92,39 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                 }
             }
 
-            # Test if the required modules & artefacts were copied to the Remotely node
-            Context '[BootStrap] Validate the RemotelyNodePath has modules & artefacts copied' {
-                # In this context validate that the required modules and artefacts were copied to the Node
+            # Test if the required modules & artifacts were copied to the PSRemotely node
+            Context '[BootStrap] Validate the PSRemotelyNodePath has modules & artifacts copied' {
+                # In this context validate that the required modules and artifacts were copied to the Node
 
-                It 'Should create RemotelyNodePath on the Node' {
-                    $Global:Remotely.RemotelyNodePath | Should Exist
+                It 'Should create PSRemotelyNodePath on the Node' {
+                    $Global:PSRemotely.PSRemotelyNodePath | Should Exist
                 }
 
-                It 'Should copy the required modules in RemotelyNodePath' {
-                    $Global:Remotely.ModulesRequired.ForEach({
-                        "$($Global:Remotely.RemotelyNodePath)\lib\$($PSItem.ModuleName)\$($PSItem.ModuleVersion)\$($PSitem.ModuleName).psd1" |
+                It 'Should copy the required modules in PSRemotelyNodePath' {
+                    $Global:PSRemotely.ModulesRequired.ForEach({
+                        "$($Global:PSRemotely.PSRemotelyNodePath)\lib\$($PSItem.ModuleName)\$($PSItem.ModuleVersion)\$($PSitem.ModuleName).psd1" |
                             Should Exist
                     })
                 }
 
-                It 'Should copy the required artefacts in RemotelyNodePath' {
-                    "$($Global:Remotely.RemotelyNodePath)\lib\artefacts" | Should Exist
-                    $Global:Remotely.ArtefactsRequired.ForEach({
-                        "$($Global:Remotely.RemotelyNodePath)\lib\artefacts\$($PSItem)" | Should Exist
+                It 'Should copy the required artifacts in PSRemotelyNodePath' {
+                    "$($Global:PSRemotely.PSRemotelyNodePath)\lib\artifacts" | Should Exist
+                    $Global:PSRemotely.ArtefactsRequired.ForEach({
+                        "$($Global:PSRemotely.PSRemotelyNodePath)\lib\artifacts\$($PSItem)" | Should Exist
                     })
                 }
             }
 
-            # Test if the Node specific tests were copied to the Remotely node
+            # Test if the Node specific tests were copied to the PSRemotely node
             Context '[BootStrap] Test if the Node tests were copied' {
 
                 It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-                    "$($Global:Remotely.RemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
                         Should Exist
                 }
 
                 It 'Should create a Pester NUnit report for the Node' {
-                    "$($Global:Remotely.RemotelyNodePath)\$($env:ComputerName).xml" |
+                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).xml" |
                         Should Exist
                 }	
             }
@@ -172,7 +172,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
             }
 
             Context 'Node data should Be populated in the Node PSSession' {
-                $NodePSSession =  $Global:Remotely.SessionHashtable["$env:COMPUTERNAME"].session
+                $NodePSSession =  $Global:PSRemotely.SessionHashtable["$env:COMPUTERNAME"].session
                 $NodeResult = Invoke-Command -Session $NodePSSession -ScriptBlock {return $Node}
                 
                 It "Should have `$Node variable defined in the Remote PSSession" {
@@ -192,14 +192,14 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
 
         }
 
-        Describe 'PSSession opened during Remotely run, persist.' -Tag Integration {
+        Describe 'PSSession opened during PSRemotely run, persist.' -Tag Integration {
             
             Context 'Using the Get-RemoteSession function' {
                 $RemoteSession = Get-RemoteSession
 
                 It 'Should return the PSSession starting with name Remote-NodeName' {
                     $RemoteSession.Foreach({
-                        $PSItem.Name | Should Match 'Remotely-*'
+                        $PSItem.Name | Should Match 'PSRemotely-*'
                     })
                 }
 
@@ -211,42 +211,38 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                 
             }
 
-            Context 'Using the global variable Remotely' {
+            Context 'Using the global variable PSRemotely' {
 
                 It 'Should have the PSSession maintained in the Session hashtable' {
-                    $Global:Remotely.SessionHashTable | Should NOT BeNullOrEmpty
-                    $Global:Remotely.SessionHashTable.ContainsKey('Localhost') | Should Be $True
-                    $Global:Remotely.SessionHashTable.ContainsKey("$env:COMPUTERNAME") | Should Be $True
+                    $Global:PSRemotely.SessionHashTable | Should NOT BeNullOrEmpty
+                    $Global:PSRemotely.SessionHashTable.ContainsKey('Localhost') | Should Be $True
+                    $Global:PSRemotely.SessionHashTable.ContainsKey("$env:COMPUTERNAME") | Should Be $True
                 }
             }
         }
 
         Describe 'Clear-RemoteSession' -Tag Integraion {
 
-            Context 'Clear all open PSSessions after Remotely run' {
+            Context 'Clear all open PSSessions after PSRemotely run' {
                 Clear-RemoteSession
 
-                It 'Should clear all Remotely PSSessions' {
+                It 'Should clear all PSRemotely PSSessions' {
                     Get-RemoteSession | Should BeNullOrEmpty
-                    Get-PSSession -Name Remotely-* | Should BeNullOrEmpty
+                    Get-PSSession -Name PSRemotely-* | Should BeNullOrEmpty
                 }
             }
 
-            Context 'Should update the global variable Remotely' {
+            Context 'Should update the global variable PSRemotely' {
 
                 It 'Should clear out Session Hashtable' {
-                    $Global:Remotely.SessionHashTable | Should  BeNullOrEmpty
-                }
-
-                It 'Should clear out the NodeMap' {
-                    $Global:Remotely.NodeMap | Should BeNullOrEmpty
+                    $Global:PSRemotely.SessionHashTable | Should  BeNullOrEmpty
                 }
             }
         }
     }
-    catch {
-        Clear-RemotelyNodePath
-        Clear-RemoteSession
+    finally {
+        Clear-PSRemotelyNodePath
+        #Clear-RemoteSession
     }
 
 }

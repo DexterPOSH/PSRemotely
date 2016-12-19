@@ -1,4 +1,4 @@
-if(-not $ENV:BHProjectPath)
+﻿if(-not $ENV:BHProjectPath)
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
@@ -8,15 +8,15 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
-		Remove-Module -Name $PSitem.BaseName -Force -ErrorAction SilentlyContinue # reload the module, the script module might have changes
+		Remove-Module -Name $PSitem.BaseName -Force # reload the module, the script module might have changes
 		Import-Module -Name $PSItem.FullName -Force
 	}
 
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-# PS Remotely Test file to be used for this Integration test.
+# PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.CredentialHash.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
+$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
 # Create a new User named PSRemotely for testing the PSSession
@@ -25,11 +25,13 @@ $userCredHashtable = @{"$Env:COMPUTERNAME"=$UserCred}
 New-User -Credential $UserCred 
 Add-LocalUserToLocalAdminGroup -UserName PSRemotely
 Disable-LocalAccountTokenFilterPolicy # This is needed to establish PSSession using the local user, revert in the end
+Start-Sleep -Seconds 4
 
 try {
+
 	Describe "PSRemotely CredentialHash usage, with PS V$($PSVersion)" -Tag Integration {
-	
-		# Act, Invoke Remotely
+
+		# Act, Invoke PSRemotely
 		$Result = Invoke-PSRemotely -Script @{
             Path=$RemotelyTestFile;
             Parameters= @{CredentialHash=$userCredHashtable}
@@ -38,8 +40,8 @@ try {
 		# Assert
 
 		# Test if the PSSession was opened to the node using the supplied credential
-		Context 'Validate that PSSession was created for the Remotely node using supplied CredentialHash' {
-			$SessionHash = $Global:Remotely.SessionHashtable["$env:COMPUTERNAME"]
+		Context 'Validate that PSSession was created for the PSRemotely node using supplied CredentialHash' {
+			$SessionHash = $Global:PSRemotely.SessionHashtable["$env:COMPUTERNAME"]
 
 			It 'Should have opened a PSSession to the Node' {
 				$SessionHash.Session | Should NOT BeNullOrEmpty	
@@ -50,7 +52,7 @@ try {
 			}
 
             It 'Should use the Credentials in the Credential hash' {
-                $SessionHash.Credential | Should NOT BeNullOrEmpty
+                #$SessionHash.Credential | Should NOT BeNullOrEmpty
                 $SessionHash.Credential.UserName | Should Be 'PSRemotely'
             }
 		}
@@ -59,7 +61,7 @@ try {
 
 }
 finally {
-	Clear-RemotelyNodePath
+	Clear-PSRemotelyNodePath
     Remove-User -UserName PSRemotely
     Clear-RemoteSession
 	Enable-LocalAccountTokenFilterPolicy

@@ -72,7 +72,7 @@ try {
     }
 }
 finally {
-    Clear-RemotelyNodePath
+    Clear-PSRemotelyNodePath
     Remove-User -UserName PSRemotely
     Clear-RemoteSession
 	Enable-LocalAccountTokenFilterPolicy

@@ -8,7 +8,7 @@
         - Restart the WinRM service, just in case.
 #>
 
-Function Clear-RemotelyNodePath {
+Function Clear-PSRemotelyNodePath {
     param($Remotely)
 
     Remove-Item -Path $Global:Remotely.RemotelyNodePath -Recurse -Force
