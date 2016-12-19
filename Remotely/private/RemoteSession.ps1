@@ -135,7 +135,7 @@ function CreateSessions
 						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
 						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
 						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
-                        #ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
+                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
                     }
 					$PSRemotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
