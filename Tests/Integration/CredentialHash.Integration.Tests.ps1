@@ -15,7 +15,7 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PS Remotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artefacts\Localhost.CredentialHash.PSRemotely.ps1"
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.CredentialHash.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\Remotely.json"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
@@ -30,7 +30,7 @@ try {
 	Describe "PSRemotely CredentialHash usage, with PS V$($PSVersion)" -Tag Integration {
 	
 		# Act, Invoke Remotely
-		$Result = Invoke-Remotely -Script @{
+		$Result = Invoke-PSRemotely -Script @{
             Path=$RemotelyTestFile;
             Parameters= @{CredentialHash=$userCredHashtable}
         }
