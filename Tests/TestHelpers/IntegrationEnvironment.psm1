@@ -11,7 +11,7 @@
 Function Clear-PSRemotelyNodePath {
     param($Remotely)
 
-    Remove-Item -Path $Global:Remotely.RemotelyNodePath -Recurse -Force
+    Remove-Item -Path $Global:PSRemotely.PSRemotelyNodePath -Recurse -Force
 }
 
 # Credits : Picked these helpers from the DSC Resources repo 
