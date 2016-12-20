@@ -4,8 +4,11 @@ Function Invoke-PSRemotely {
     param(
 
         # Path to the PSRemotely script file. First step.
-        [Parameter(Mandatory,ParameterSetName='BootStrap',ValueFromPipeline=$true)]
-        [Object[]]$Script,
+        [Parameter(Position=-0,
+                    Mandatory=$False,
+                    ParameterSetName='BootStrap',
+                    ValueFromPipeline=$true)]
+        [Object[]]$Script='.',
         
         <#
          JSON String input which contains the nodename and testnames to run.
@@ -23,7 +26,9 @@ Function Invoke-PSRemotely {
         }
          #>
 
-        [Parameter(Mandatory, ParameterSetName='JSON')]
+        [Parameter(Position=0,
+                    Mandatory=$true,
+                    ParameterSetName='JSON')]
         [String]$JSONInput
 
         
@@ -105,6 +110,7 @@ Function Invoke-PSRemotely {
                 foreach ($testScript in $testScripts){
                     try {
                         do{
+                            Write-VerboseLog -Message "Invoking test script -> $($testscript.path)"
                             & $invokeTestScript -Path $testScript.Path -Arguments $testScript.Arguments -Parameters $testScript.Parameters
                         } until ($true)
                     }
@@ -165,8 +171,10 @@ function ResolveTestScripts
                 (Get-Item -LiteralPath $unresolvedPath) -is [System.IO.FileInfo]){
                 
                 $extension = [System.IO.Path]::GetExtension($unresolvedPath)
-                if ($extension -ne '.ps1'){
-                    Write-Error "Script path '$unresolvedPath' is not a ps1 file."
+                $IsPSRemotelyInName = [System.IO.Path]::GetFileNameWithoutExtension($unresolvedPath)
+                $IsNameEndingwithPSRemotely = $IsPSRemotelyInName.EndsWith('PSRemotely',$true,[System.Globalization.CultureInfo]::InvariantCulture)
+                if (($extension -ne '.ps1') -and (IsNameEndingwithPSRemotely)){
+                    Write-Error "Script path '$unresolvedPath' is not a *.PSRemotely.ps1 file."
                 }
                 else
                 {
@@ -184,7 +192,7 @@ function ResolveTestScripts
                 Resolve-Path -Path $unresolvedPath |
                     Where-Object { $_.Provider.Name -eq 'FileSystem' } |
                     Select-Object  -ExpandProperty ProviderPath |
-                    Get-ChildItem -Include *.Tests.ps1 -Recurse |
+                    Get-ChildItem -Include *.PSRemotely.ps1 -Recurse |
                     Where-Object { -not $_.PSIsContainer } |
                     Select-Object -ExpandProperty FullName -Unique |
                     ForEach-Object {
