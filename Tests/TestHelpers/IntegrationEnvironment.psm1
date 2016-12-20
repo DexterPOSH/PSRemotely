@@ -183,7 +183,7 @@ Function Expand-ComputerName {
 
 Function Copy-DummyArtifact {
     param($Path)
-
+    New-Item -ItemType File -Force -Path $Path
     Set-Content -Path $Path -Value 'Dummy' -Force -ErrorAction SilentlyContinue
 }
 
