@@ -17,6 +17,7 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.CredentialHash.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
+$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
 # Create a new User named PSRemotely for testing the PSSession
@@ -30,7 +31,10 @@ Start-Sleep -Seconds 4
 try {
 
 	Describe "PSRemotely CredentialHash usage, with PS V$($PSVersion)" -Tag Integration {
-
+ 		# use a dummy artifact with PSRemotely-
+        Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+        Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"   
+		
 		# Act, Invoke PSRemotely
 		$Result = Invoke-PSRemotely -Script @{
             Path=$RemotelyTestFile;
@@ -65,4 +69,7 @@ finally {
     Remove-User -UserName PSRemotely
     Clear-RemoteSession
 	Enable-LocalAccountTokenFilterPolicy
+	Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+    Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+
 }

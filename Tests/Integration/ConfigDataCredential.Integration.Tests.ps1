@@ -16,7 +16,7 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-
+$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
 New-User -Credential $UserCred 
@@ -26,7 +26,11 @@ Disable-LocalAccountTokenFilterPolicy
 
 try {
     Describe "PSRemotely ConfigData with Credential usage, with PS V$($PSVersion)" -Tag Integration {
-        
+        # Arrange
+        # use a dummy artifact with PSRemotely-
+        Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+        Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"   
+
         # Act, Invoke PSRemotely
         $Result = Invoke-PSRemotely -Script @{
             Path=$RemotelyTestFile;
@@ -76,4 +80,6 @@ finally {
     Remove-User -UserName PSRemotely
     Clear-RemoteSession
 	Enable-LocalAccountTokenFilterPolicy
+    Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+    Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
 }
