@@ -179,3 +179,29 @@ Function Expand-ComputerName {
     $FileContent = $FileContent.Replace('$env:COMPUTERNAME',"$($env:COMPUTERNAME)")
     $FileContent
 }
+
+
+Function Copy-DummyArtifact {
+    param($Path)
+
+    Set-Content -Path $Path -Value 'Dummy' -Force -ErrorAction SilentlyContinue
+}
+
+Function Remove-DummyArtifact {
+    param($Path)
+    Remove-Item -Path $Path -Force -ErrorAction SilentlyContinue
+}
+
+Function Set-PSRemotelyToUseDummyArtifact {
+    param($Path)
+    $JsonObject =  ConvertFrom-Json -InputObject $(Get-Content -Path $Path -Raw)
+    $JsonObject.ArtifactsRequired = @('DeploymentManifest.xml')
+    $JsonObject | ConvertTo-Json | Set-Content -Path $Path
+}
+
+Function Reset-PSRemotelyToUseDummyArtifact {
+    param($Path)
+    $JsonObject =  ConvertFrom-Json -InputObject $(Get-Content -Path $Path -Raw)
+    $JsonObject.ArtifactsRequired = @('')
+    $JsonObject | ConvertTo-Json | Set-Content -Path $Path  
+}
