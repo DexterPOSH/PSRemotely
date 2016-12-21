@@ -33,3 +33,22 @@ It  runs the tests in the StorageNodeTests.PSRemotely.ps1 file using the followi
 C:\EnvironmentValidation\StorageNodeTests.PSRemotely.ps1 .\EnvironmentData.json -Credential <CredentialObject> 
 ````
 
+## Run failed tests on the Remote nodes
+
+Now while working with ops validation, you might have scripts or DSC configuration in place which fix the issue.
+So suppose, you ran the tests like below to begin with against your compute nodes in the Environment :-
+
+```powershell
+Invoke-PSRemotely -Script C:\EnvironmentValidation\ComputeNodeTests.PSRemotely.ps1
+```
+
+And suppose the ops validation tests named "TestDNSConnectivity" failed on the remote node named 'ComputeNode1'.
+You have fixed the issue and want to only run the failed test on the node, you can use the below method :-
+
+```powershell
+$TestsTobeRunObejct = [pscustomobject]@{NodeName='ComputeNode1';Tests=@(@{Name='TestDNSConnectivity'})}
+Invoke-PSRemotely -JSONInput $($TestsTobeRunObejct | ConvertTo-Json) 
+```
+The above JSON input object instructs PSRemotely to use the earlier created PSSession to connect to the node and
+run the required tests on the remote node.
+
