@@ -1,4 +1,28 @@
 Function Node {
+<#
+	.SYNOPSIS
+	Function implementing the 'Node' keyword logic.
+	The Node keyword targets the remote nodes by bootstrapping the nodes and  getting them ready for PSRemotely.
+
+	.PARAMETER Name 
+	DNS name of the remote name to target for the Remote ops validation.
+
+	.PARAMETER testBlock
+	 Scriptblock housing various Pester Describe block which gets executed on the remote node by PSRemotely.
+	
+	.PARAMETER Tag
+	Specify the tag which gets passed to Pester while running tests on the remote nodes.
+	This lets you have multiple Node blocks for the same node but lets Remotely know that you intend to
+	run Pester tests with a specific tag.
+
+	.NOTES
+	Read the documentation hosted on GitHub for the project for using the DSL.
+	
+	.LINK
+	PSRemotely
+	Invoke-PSRemotely
+
+#>
     [OutputType([String[]])]
 	[CmdletBinding()]
     param(
@@ -6,7 +30,6 @@ Function Node {
 					ValueFromPipeline = $True)]
 		[String[]]$name,
 
-		# The Pester Describe block which gets executed on the PSRemotely node.
         [Parameter(Mandatory = $true, Position = 1)]
         [ScriptBlock] $testBlock,
 
