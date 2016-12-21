@@ -37,7 +37,7 @@ function PSRemotely
 
 			if ($argumentList){
 				Write-VerboseLog -Message 'Setting ArgumentList passed in Script scope'
-				Set-Variable -Name ArgumentList  -Scope  Script
+				Set-Variable -Name ArgumentList  -Scope  Script -Value $ArgumentList
 			}
 			else {
 				Write-VerboseLog -Message 'Creating an empty Argumnelist variable in Script scope'
