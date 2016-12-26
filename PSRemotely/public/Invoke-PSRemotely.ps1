@@ -1,5 +1,98 @@
-
 Function Invoke-PSRemotely {
+<#
+    .SYNOPSIS
+        Invoke PSRemotely
+
+    .DESCRIPTION
+        Invoke PSRemotely
+
+        Searches for .PSRemotely.ps1 files in the current and nested paths, and invokes the remote ops validation
+
+    .PARAMETER Path
+        Path to a specific PSRemotely.ps1 file, or to a folder that we recursively search for *.PSRemotely.ps1 files
+
+        Defaults to the current path
+
+    .PARAMETER Recurse
+        If path is a folder, whether to recursively search for *.PSRemotely.ps1 files under that folder
+
+        Defaults to $True
+
+    .PARAMETER Tags
+        Only invoke deployments that are tagged with all of the specified Tags (-and, not -or)
+
+    .PARAMETER DeploymentRoot
+        Root path used to determing relative paths. Defaults to the Path parameter.
+
+    .PARAMETER PSDeployTypePath
+        Specify a PSRemotely.yml file that maps DeploymentTypes to their scripts.
+
+        This defaults to the PSRemotely.yml in the PSRemotely module folder
+
+    .PARAMETER Force
+        Force deployment, skipping prompts and confirmation
+
+    .EXAMPLE
+        Invoke-PSRemotely
+
+        # Run deployments from any file named *.PSRemotely.ps1 found under the current folder or any nested folders.
+        # Prompts to confirm
+
+    .EXAMPLE
+        Invoke-PSRemotely -Path C:\Git\Module1\deployments\mymodule.PSRemotely.ps1 -force
+
+        # Run deployments from mymodule.PSRemotely.ps1.
+        # Don't prompt to confirm.
+
+    .EXAMPLE
+        Invoke-PSRemotely -Path C:\Git\Module1\deployments\mymodule.PSRemotely.ps1 -DeploymentRoot C:\Git\Module1 -Tags Prod
+
+        # Run deployments from mymodule.PSRemotely.ps1.
+        # Use C:\Git\Module1 to build any relative paths.
+        # Only run deployments tagged 'Prod'
+
+    .LINK
+        about_PSDeploy
+
+    .LINK
+        https://github.com/RamblingCookieMonster/PSRemotely
+
+    .LINK
+        Deploy
+
+    .LINK
+        By
+
+    .LINK
+        To
+
+    .LINK
+        FromSource
+
+    .LINK
+        Tagged
+
+    .LINK
+        WithOptions
+
+    .LINK
+        WithPreScript
+
+    .LINK
+        WithPostScript
+
+    .LINK
+        DependingOn
+
+    .LINK
+        Get-PSDeployment
+
+    .LINK
+        Get-PSDeploymentType
+
+    .LINK
+        Get-PSDeploymentScript
+#>
     [CmdletBinding(DefaultParameterSetName='BootStrap')]
     param(
 
@@ -30,8 +123,6 @@ Function Invoke-PSRemotely {
                     Mandatory=$true,
                     ParameterSetName='JSON')]
         [String]$JSONInput
-
-        
 
     )
     BEGIN {
@@ -92,6 +183,7 @@ Function Invoke-PSRemotely {
             }
             'BootStrap' {
                 # Path to a Script housing PSRemotely tests, it should run the script as it script
+                # Credits to Pester's Invoke-Pester for the below logic
                 Write-VerboseLog -Message 'ParameterSet - BootStrap'
                 $invokeTestScript = {
                     param (
@@ -135,7 +227,6 @@ Function Invoke-PSRemotely {
 }
 
 
-
 function ResolveTestScripts
 {
     param ([object[]] $Path)
@@ -173,7 +264,7 @@ function ResolveTestScripts
                 $extension = [System.IO.Path]::GetExtension($unresolvedPath)
                 $IsPSRemotelyInName = [System.IO.Path]::GetFileNameWithoutExtension($unresolvedPath)
                 $IsNameEndingwithPSRemotely = $IsPSRemotelyInName.EndsWith('PSRemotely',$true,[System.Globalization.CultureInfo]::InvariantCulture)
-                if (($extension -ne '.ps1') -and (IsNameEndingwithPSRemotely)){
+                if (($extension -ne '.ps1') -or ( -not $IsNameEndingwithPSRemotely)){
                     Write-Error "Script path '$unresolvedPath' is not a *.PSRemotely.ps1 file."
                 }
                 else
