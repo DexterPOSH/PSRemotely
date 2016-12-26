@@ -2,16 +2,6 @@ if(-not $ENV:BHProjectPath)
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
-Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
-Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-
-# Import the TestHelpers
-Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
-	Foreach-Object {
-		Remove-Module -Name $PSitem.BaseName -Force # reload the module, the script module might have changes
-		Import-Module -Name $PSItem.FullName -Force
-	}
-
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
@@ -19,17 +9,30 @@ $RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artifacts\Localhost
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.CustomVariableConfigData.PSRemotely.ps1")
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 $ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
+# Import the TestHelpers
+Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
+	Foreach-Object {
+		Remove-Module -Name $PSitem.BaseName -Force -ErrorAction SilentlyContinue # reload the module, the script module might have changes
+		Import-Module -Name $PSItem.FullName -Force
+	}
+
+
+# use a dummy artifact with PSRemotely-
+Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+
+Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
+
+
 
 Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
 
     try {
 
         Describe "PSRemotely $([System.IO.Path]::GetFileName($RemotelyTestFile)) usage, with PS V$($PSVersion)" -Tag Integration {
-            
-            # Arrange
-            # use a dummy artifact with PSRemotely-
-            Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
-            Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+
             # Create a argument hashtable 
             $ArgumentList = @{ServiceName='Bits';Environment='Dev'}
 
@@ -38,7 +41,6 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                 Path=$RemotelyTestFile;
                 Parameters=@{Arguments=$ArgumentList}
             }
-            $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
             
             # Assert
             Context "Validate that PSSession was created for the PSRemotely node" {

@@ -2,16 +2,6 @@
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
-Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
-Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-
-# Import the TestHelpers
-Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
-	Foreach-Object {
-		Import-Module -Name $PSItem -verbose -Force
-	}
-
-#
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
@@ -19,13 +9,24 @@ $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ba
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 $ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 
+# Import the TestHelpers
+Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
+	Foreach-Object {
+		Import-Module -Name $PSItem -verbose -Force
+	}
+
+
+# use a dummy artifact with PSRemotely-
+Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+
+Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
+
+
 try {
 	Describe "PSRemotely Basic usage, with PS V$($PSVersion)" -Tag Integration {
-		# Arrange
-		# use a dummy artifact with PSRemotely-
-		Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
-		Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
-
+		
 		# Act, Invoke PSRemotely
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 		$RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
