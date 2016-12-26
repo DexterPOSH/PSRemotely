@@ -10,14 +10,36 @@
 #>
 param([hashtable]$Arguments)
 
-PSRemotely -ArgumentList $arguments {
+# Configuration Data, can be passed as an argument or from a .psd1 or .json file
+$ConfigData = @{
+	AllNodes = @(
+		@{
+			NodeName='*';
+			DomainFQDN='dexter.lab';
+            Credential = $Credential
+		},
+		@{
+			NodeName="$env:ComputerName";
+			ServiceName = 'bits';
+			Type='Compute';
 
-    Node localhost {
+		},
+		@{
+			NodeName='localhost';
+			ServiceName = 'winrm';
+			Type='Storage';
+		}
+	)
+}
+
+PSRemotely -ArgumentList $arguments -ConfigData $ConfigData {
+
+    Node $AllNodes.Where({$PSItem.Type -eq 'Storage'}).NodeName {
         Describe "Node Service test" {
 			
-			$Service = Get-Service -Name $ServiceName
+			$Service = Get-Service -Name $node.ServiceName # using node specific attributes
 			
-			It "Should have a service named $ServiceName" {
+			It "Should have a service named $ServiceName" { # using $ServiceName variable
 				$Service | Should Not BeNullOrEmpty
 			}
 			
