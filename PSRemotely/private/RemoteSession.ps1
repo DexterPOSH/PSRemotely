@@ -204,7 +204,7 @@ Function ReinitializeSession {
         [ValidateNotNullOrEmpty()] $sessionInfo,
 
 		[Parameter(Position=1, Mandatory=$true)]
-		[ValidateNotNullOrEmpty()] 
+		[AllowNull()] 
 		[HashTable]$ArgumentList
 	)
 	TRY {
@@ -213,10 +213,12 @@ Function ReinitializeSession {
 	CATCH {
 		# TO DO : above fails some time. Check why.
 	}
-	Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
-		param($arglist)
-		foreach ($enum in $arglist.GetEnumerator()) {
-			New-Variable -Name $enum.Key -Value $enum.Value -Force
+	if ($ArgumentList) {
+		Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
+			param($arglist)
+			foreach ($enum in $arglist.GetEnumerator()) {
+				New-Variable -Name $enum.Key -Value $enum.Value -Force
+			}
 		}
 	}
 }
