@@ -37,10 +37,10 @@ function PSRemotely
 
 			if ($argumentList){
 				Write-VerboseLog -Message 'Setting ArgumentList passed in Script scope'
-				Set-Variable -Name ArgumentList  -Scope  Script
+				Set-Variable -Name ArgumentList  -Scope  Script -Value $ArgumentList
 			}
 			else {
-				Write-VerboseLog -Message 'Creating an emtyp Argumnelist variable in Script scope'
+				Write-VerboseLog -Message 'Creating an empty Argumnelist variable in Script scope'
 				New-Variable -Name ArgumentList -Scope Script -Value @{} -Force -ErrorAction SilentlyContinue
 			}
 			
@@ -88,7 +88,7 @@ function PSRemotely
 								Write-VerboseLog -Message "$($sessionInfo.Session.Computername) is bootstrapped."
 								# archive the existing tests files on the PSRemotely node
 								Write-VerboseLog -Message "Cleaning up $($PSRemotely.PSRemotelyNodePath) on Node -> $($sessionInfo.Session.ComputerName)"
-								CleanupRemotelyNodePath -Session $sessionInfo.session -PSRemotelyNodePath $PSRemotely.PSRemotelyNodePath
+								CleanupPSRemotelyNodePath -Session $sessionInfo.session -PSRemotelyNodePath $PSRemotely.PSRemotelyNodePath
 							}
 							else {
 								# run the bootstrap function
