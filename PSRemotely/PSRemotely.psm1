@@ -30,6 +30,6 @@ $PSRemotely.Add('NodeMap', @())
 $PSRemotely.Add('sessionHashTable', @{})
 
 # create an alias for PSRemotely
-New-Alias -Name Remotely -Value PSRemotely -Description "Remote Ops validation, using Remotely."
+New-Alias -Name Remotely -Value PSRemotely -Description "Remote Ops validation, using PSRemotely."
 
 Export-ModuleMember -Function $Public.Basename -Variable PSRemotely

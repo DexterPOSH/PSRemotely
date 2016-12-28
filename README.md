@@ -1,28 +1,36 @@
-Synopsis
+
+PSRemotely
 ============
-PS Remotely, started as a fork of the [Remotely project](https://github.com/PowerShell/Remotely) and over the time grew out of it.
-In a nutshell it let's you execute Pester tests against a remote machine. Remotely can use PoshSpec style infrastucture validation tests too.
+
+PSRemotely, started as a fork of the [Remotely project](https://github.com/PowerShell/Remotely) and over the time grew out of it.
+In a nutshell it let's you execute Pester tests against a remote machine. PSRemotely can use PoshSpec style infrastucture validation tests too.
+
+Note - In the code & documentation the term 'Remotely' and 'PSRemotely' refer to the same.
 
 It supports copying of the modules and artefacts to the remote node before the Pester tests are run. 
 
 Description
 ======================
-PS Remotely exposes a DSL which makes it very easy to run tests on the remote nodes.
-If you already have pester tests then you need to just wrap them inside the Remotely keyword and specify the node information using the Node keyword.
+PSRemotely exposes a DSL which makes it easy to run Pester tests on the remote nodes.
+If you already have pester tests then you need to just wrap them inside the PSRemotely keyword and specify the node information using the Node keyword.
 
-PS Remotely workflow is as under :
+PSRemotely workflow is as under :
 
-1. Read Remotely.json file to determine the path & modules to be used on the remote nodes.
+1. Read PSRemotely.json file to determine the path & modules to be used on the remote nodes.
 2. Bootstrap the remote nodes, this involves 
     - Testing the remote node path exists.
     - All the modules required are copied from the Lib/ folder to the remote node.
-3. Drop the Pester tests (Describe blocks) as individual tests file on the remote node. Also copy the items defined in the Remotely.json, which are placed under Artefacts/ folder inside local Remotely folder.
-4. Invoke the tests using background jobs and output a JSON object back.
-5. It also exports a global variable named $Remotely to which the Node bootstrap map and PSSession information is stored.
+3. Drop the Pester tests (Describe blocks) as individual tests file on the remote node. 
+    Also copy the items defined in the PSRemotely.json, which are placed under Artifacts/ folder inside local PSRemotely folder.
+4. Invoke the tests using background jobs on the remote nodes and wait for these jobs to complete, finally process and output a JSON object back.
+5. It also exports a global variable named $PSRemotely to which the Node bootstrap map and PSSession information is stored.
 
-Example 1 - Basic
-============
-Already existing Pester test:
+## Remote Ops validation
+
+Well this is a term coined by us for some of the infrastucture validation being done for Engineered solutions.
+So taking liberty to use this here. 
+
+Support, you already have below existing Pester test for some nodes in our environment:
 
 ```powershell
 Describe 'Bits Service test' {
@@ -38,33 +46,34 @@ Describe 'Bits Service test' {
     }
 }
 ```
-If you want to run the very same tests on the remote node named say AD, then below is how you use PS Remotely.
+If you want to run the very same tests on the remote node named say AD, then below is how you use PSRemotely.
 
-Usage with PS Remotely:
+Usage with PSRemotely:
 
 ```powershell
-Remotely {
-	Node AD {
-		Describe 'Bits Service test' {
-			
+PSRemotely {
+	
+    Node AD {
+		
+        Describe 'Bits Service test' {
+		
             $BitsService = Get-Service -Name Bits
             
             It "Should have a service named bits" {
                 $BitsService | Should Not BeNullOrEmpty
             }
             
-            it 'Should be running' {
+            It 'Should be running' {
                 $BitsService.Status | Should be 'Running'
             }
-		}		
+        }		
 	}
 }
-
 ```
-Once you have the tests file reeady, below is how you invoke the PS Remotely framework : 
+Once you have the tests file ready, below is how you invoke the PSRemotely framework to start the remote ops validation : 
 
 ```powershell
-Invoke-Remotely -Script <Path_to_Tests.ps1>
+Invoke-PSRemotely -Script <Path_to_Tests.ps1>
 ```
 
 Output of the above is a JSON object, if the tests pass then an empty JSON object array of *TestResult* is returned 
@@ -86,186 +95,54 @@ otherwise the Error record thrown by Pester is returned :
 }
 ```
 
-Example 2 - Use Configuration Data 
-============
 
-PS Remotely allows you to use DSC style configuration data for specifying the node configuration.
-Also you can reference the $Node variable inside your tests, PS Remotely creates the node variable in the PSSession after reading the configuration data.
-
+## Initial PSRemotely setup
 
 ```powershell
-$ConfigurationData = @{
-	AllNodes = @(
-		@{
-			NodeName='*';
-			DomainFQDN='dexter.lab';
-		},
-		@{
-			NodeName='VM1';
-			ServiceName = 'bits';
-			Type='Compute';
+# One time setup
+    # Download the repository
+    # Unblock the zip
+    # Extract the PSRemotely folder to a module path (e.g. $env:USERPROFILE\Documents\WindowsPowerShell\Modules\)
 
-		},
-		@{
-			NodeName='VM2';
-			ServiceName = 'winrm';
-			Type='Storage';
-		}
-	)
-}
+    #Simple alternative, if you have PowerShell 5, or the PowerShellGet module:
+        Install-Module PSRemotely
 
-Remotely -Verbose -ConfigurationData $ConfigurationData {
-	
-    Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
-		
-        # service test
-        Describe 'Service test' {
-		
-	        $Service = Get-Service -Name $node.ServiceName
-			
-	        It "Should have a service named bits" {
-		        $Service | Should Not BeNullOrEmpty
-	        }
-			
-	        it 'Should be running' {
-		        $Service.Status | Should be 'Running'
-	        }
-        }
-    }
-}
+# Import the module.
+    Import-Module PSRemotely    # Alternatively, Import-Module \\Path\To\PSRemotely
+
+# Get commands in the module
+    Get-Command -Module PSRemotely
+
+# Get help for the module and a command
+    
+    Get-Help Invoke-PSRemotely -full
 ```
+## More Information
 
-Another salient feature of PS Remotely is that you can pass a path to a .JSON or .psd1 file housing the configuration data.
+The [PSRemotely docs]() will include more information, including :
 
-```powershell
+* PSRemotely Basics
+* PSRemotely Examples
+* PSRemotely How Tos
 
-Remotely -Path C:\Remotely\Prod.ConfigData.json {
-	
-    Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
-		
-        # service test
-        Describe 'Service test' {
-		
-            $Service = Get-Service -Name $node.ServiceName
-            
-            It "Should have a service named bits" {
-                $Service | Should Not BeNullOrEmpty
-            }
-            
-            It 'Should be running' {
-                $Service.Status | Should be 'Running'
-            }
-        }
-    }
-}
-```
+## Notes
 
-Example 3 - Use Configuration Data and specify credentials [This has to be tested]
-============
+Thanks goes to :
 
-PS Remotely allows you to specify credentials in the Configuration data along with passing a credential hash to the Remotely outside of the Configuration Data.
+- [Remotely project](https://github.com/PowerShell/Remotely) 
+- [Ravikanth Chaganti](https://twitter.com/ravikanth) - For all the help with the ideas and motivation behind the scenes.
+- Warren Frame's [PSDeploy module ](https://github.com/RamblingCookieMonster/PSDeploy) - have been following Warren's module & documentation structure to organize.
+- [Pester module] (https://github.com/pester/pester), PSDesiredStateConfiguration module for borrowing some of the ideas.
+- PowerShell community & fellow MVPs, who are fantastic at helping each other.
 
+## TO DO 
 
-```powershell
-$CredentialHash = @{
-    'AD' = $(New-Object -TypeName PSCredential -ArgumentList 'Administrator',(ConvertTo-SecureString -String 'DefaultPass' -AsPlainText -Force));
-    'WDS' = $(Import-CliXML -Path C:\Vault\WDS.Cred.xml)
-}
+PSRemotely in its current form works for our needs to validate some of the Engineered solutions.
+But it has the potential to grow to be much bigger, below are some of the items in the wishlist :
 
-Remotely -CredentialHash $CredentialHash {
-    Node AD, WDS {
+- Use PowerShell classes, and add support for providers for nodes running either On-prem or on Cloud (AWS or Azure).
+- Integrate with JEA, since PSRemotely uses PSSession endpoints these can be locked down using JEA on the nodes.
+- More unit tests, lacking far behind in this aspect.
+- Faster background processing of the remote node jobs, using runspaces.
 
-        Describe 'WinRM service tests' {
-
-            $Service = Get-Service -Name $node.ServiceName
-            
-            It "Should have a service named bits" {
-                $Service | Should Not BeNullOrEmpty
-            }
-            
-            It 'Should be running' {
-                $Service.Status | Should be 'Running'
-            }
-        }
-
-    }
-}
-```
-
-If you are using ConfigurationData then you can specify a note attribute named credential which gets picked up to open a PSSession to the remote node, which PS Remotely uses.
-[See RemoteSession.ps1 > Function CreateSessions]
-
-```powershell
-$ConfigurationData = @{
-	AllNodes = @(
-		@{
-			NodeName='*';
-			DomainFQDN='dexter.lab';
-            Credential = $(Get-Credential -UserName 'dexter\delegatedadmin' -Message 'Enter the creds for the delegatedadmin')
-		},
-		@{
-			NodeName='VM1';
-			ServiceName = 'bits';
-			Type='Compute';
-
-		},
-		@{
-			NodeName='VM2';
-			ServiceName = 'winrm';
-			Type='Storage';
-		}
-	)
-}
-
-Remotely -Verbose -ConfigurationData $ConfigurationData {
-	
-    Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
-		
-        # service test
-        Describe 'Service running test' {
-		
-	        $Service = Get-Service -Name $node.ServiceName
-
-	        It 'Should be running' {
-		        $Service.Status | Should be 'Running'
-	        }
-        }
-
-    }
-}
-```
-
-Example 4 - Specify a variable to Remotely which needs to be available on the remote nodes.
-============
-
-If you needed to make a variable available on the remote node during the invocation of the Pester 
-tests then you can specify these as a hashtable to the paramter -ArgumentList.
-
-```powershell
-Remotely -ArgumentList @{ServiceName='bits'} {
-    Node AD {
-
-        Describe "$ServiceName running test" {
-            $Service = Get-Service -Name $ServiceName
-
-	        It 'Should be running' {
-		        $Service.Status | Should be 'Running'
-	        }
-
-        }
-    }
-}
-```
-
-Links
-============
-* https://github.com/PowerShell/Remotely
-* https://github.com/pester/Pester
-
-Running Tests
-=============
-Pester-based tests are located in ```<branch>/Remotely.Tests.ps1```
-
-* Ensure Pester is installed on the machine
-* Run tests:
-    .\Remotely.Tests.ps1
+Feel free to submit any ideas, bugs or pull requests.

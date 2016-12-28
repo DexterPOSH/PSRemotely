@@ -6,108 +6,45 @@ Function Invoke-PSRemotely {
     .DESCRIPTION
         Invoke PSRemotely
 
-        Searches for .PSRemotely.ps1 files in the current and nested paths, and invokes the remote ops validation
+        Searches for .PSRemotely.ps1 files in the current and nested paths, and invokes the remote ops validation.
+        By default PSRemotely would run all the 
 
-    .PARAMETER Path
-        Path to a specific PSRemotely.ps1 file, or to a folder that we recursively search for *.PSRemotely.ps1 files
+    .PARAMETER Script
+        Path to a specific .PSRemotely.ps1 file, or to a folder that is recursively search for *.PSRemotely.ps1 files
+        You can also use the Script parameter to pass parameter names and values to a script that contains
+        PSRemotely + Pester tests. The value of the Script parameter can be a string, a hash table, or a collection 
+        of hash tables and strings. Wildcard characters are supported.
 
-        Defaults to the current path
+        The Script parameter is optional. If you omit it, Invoke-PSRemotely runs all 
+        *.PSRemotely.ps1 files in the local directory and its subdirectories recursively. 
+            
+        To run tests in other files, such as .ps1 files, enter the path and file name of
+        the file. (The file name is required. Name patterns that end in "*.ps1" run only
+        *.PSRemotely.ps1 files.) 
 
-    .PARAMETER Recurse
-        If path is a folder, whether to recursively search for *.PSRemotely.ps1 files under that folder
+        To run a PSRemotely file with parameter names and/or values, use a hash table as the 
+        value of the script parameter. The keys in the hash table are:
 
-        Defaults to $True
+        -- Path [string] (required): Specifies a test to run. The value is a path\file 
+        name or name pattern. Wildcards are permitted. All hash tables in a Script 
+        parameter value must have a Path key. 
+            
+        -- Parameters [hashtable]: Runs the script with the specified parameters. The 
+        value is a nested hash table with parameter name and value pairs, such as 
+        @{UserName = 'User01'; Id = '28'}. 
+            
+        -- Arguments [array]: An array or comma-separated list of parameter values 
+        without names, such as 'User01', 28. Use this key to pass values to positional 
+        parameters.
+	
+        Defaults to the current path.
 
-    .PARAMETER Tags
-        Only invoke deployments that are tagged with all of the specified Tags (-and, not -or)
-
-    .PARAMETER DeploymentRoot
-        Root path used to determing relative paths. Defaults to the Path parameter.
-
-    .PARAMETER PSDeployTypePath
-        Specify a PSRemotely.yml file that maps DeploymentTypes to their scripts.
-
-        This defaults to the PSRemotely.yml in the PSRemotely module folder
-
-    .PARAMETER Force
-        Force deployment, skipping prompts and confirmation
-
-    .EXAMPLE
-        Invoke-PSRemotely
-
-        # Run deployments from any file named *.PSRemotely.ps1 found under the current folder or any nested folders.
-        # Prompts to confirm
-
-    .EXAMPLE
-        Invoke-PSRemotely -Path C:\Git\Module1\deployments\mymodule.PSRemotely.ps1 -force
-
-        # Run deployments from mymodule.PSRemotely.ps1.
-        # Don't prompt to confirm.
-
-    .EXAMPLE
-        Invoke-PSRemotely -Path C:\Git\Module1\deployments\mymodule.PSRemotely.ps1 -DeploymentRoot C:\Git\Module1 -Tags Prod
-
-        # Run deployments from mymodule.PSRemotely.ps1.
-        # Use C:\Git\Module1 to build any relative paths.
-        # Only run deployments tagged 'Prod'
-
-    .LINK
-        about_PSDeploy
-
-    .LINK
-        https://github.com/RamblingCookieMonster/PSRemotely
-
-    .LINK
-        Deploy
-
-    .LINK
-        By
-
-    .LINK
-        To
-
-    .LINK
-        FromSource
-
-    .LINK
-        Tagged
-
-    .LINK
-        WithOptions
-
-    .LINK
-        WithPreScript
-
-    .LINK
-        WithPostScript
-
-    .LINK
-        DependingOn
-
-    .LINK
-        Get-PSDeployment
-
-    .LINK
-        Get-PSDeploymentType
-
-    .LINK
-        Get-PSDeploymentScript
-#>
-    [CmdletBinding(DefaultParameterSetName='BootStrap')]
-    param(
-
-        # Path to the PSRemotely script file. First step.
-        [Parameter(Position=-0,
-                    Mandatory=$False,
-                    ParameterSetName='BootStrap',
-                    ValueFromPipeline=$true)]
-        [Object[]]$Script='.',
-        
-        <#
-         JSON String input which contains the nodename and testnames to run.
-         Below is a sample JSON string, for invoking tests named TestDNSConnectivity & TestADConnectivity on node DellBlr2C2A 
+    .PARAMETER JSONInput
+        JSON String input which contains the nodename and testnames to run.
+         Below is a sample JSON string, for invoking tests named TestDNSConnectivity & TestADConnectivity 
+         on node BLRompute1 :-
          {
-            "NodeName":  "DellBlr2C2A",
+            "NodeName":  "BLRompute1",
             "Tests":  [
                             {
                                 "Name":  "TestDNSConnectivity"
@@ -117,8 +54,60 @@ Function Invoke-PSRemotely {
                             }
             ]
         }
-         #>
 
+    
+    .EXAMPLE
+        PS> Invoke-PSRemotely
+
+        # Run remote ops validation from any file named *.PSRemotely.ps1 found under the current folder or any nested folders.
+        # Prompts to confirm
+
+    .EXAMPLE
+        PS> Invoke-PSRemotely -Script C:\InfraTests\ComputeTests.PSRemotely.ps1
+
+        # Run remote ops validation from mymodule.PSRemotely.ps1.
+        # Don't prompt to confirm.
+
+    .EXAMPLE
+        PS> Invoke-PSRemotely -Script @{
+                Path='C:\InfraTests\ComputeTests.PSRemotely.ps1';
+                Parameters = @{Credential=$(Get-Credential)};
+                Arguments = @(.\EnvironmentData.json)
+            }
+
+        # Run remote ops validation from file ComputeTests.PSRemotely.ps1.
+        # This command runs C:\InfraTests\ComputeTests.PSRemotely.ps1 file. The PSRemotely file is expecting the path to
+        # configuration data file (.json or .psd1) and Credential to be used to open PSSession to the nodes.
+        # It  runs the tests in the ComputeTests.PSRemotely.ps1 file using the following parameters: 
+
+        C:\InfraTests\ComputeTests.PSRemotely.ps1 .\EnvironmentData.json -Credential <CredentialObject> 
+    
+    .EXAMPLE
+        If suppose you ran tests on a remote node like below :- 
+        PS> Invoke-PSRemotely -Script C:\InfraTests\ComputeTests.PSRemotely.ps1
+
+        And one of the tests named 'TestDNSConnectivity' (Describe Pester block) on the remote node failed. You fixed the issue and 
+        want to just run the failed test, you could do something like below :
+
+        PS> $TestsTobeRunObejct = [pscustomobject]@{NodeName='ComputeNode1';Tests=@(@{Name='TestDNSConnectivity'})}
+        PS> Invoke-PSRemotely -JSONInput $($TestsTobeRunObejct | ConvertTo-Json) 
+
+    .LINK
+        PSRemotely
+
+    .LINK
+        https://github.com/DexterPOSH/PSRemotely
+
+#>
+    [CmdletBinding(DefaultParameterSetName='BootStrap')]
+    param(
+
+        [Parameter(Position=-0,
+                    Mandatory=$False,
+                    ParameterSetName='BootStrap',
+                    ValueFromPipeline=$true)]
+        [Object[]]$Script='.',
+        
         [Parameter(Position=0,
                     Mandatory=$true,
                     ParameterSetName='JSON')]

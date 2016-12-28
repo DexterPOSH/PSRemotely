@@ -1,19 +1,51 @@
 function PSRemotely
 {
+<#
+	.SYNOPSIS
+	Provides a Keyword to wrap around the existing Ops validation tests.
+
+	.PARAMETER Body 
+	Scriptblock enclosing the Node block to target the remote ops validation at.
+
+	.PARAMETER ConfigurationData
+	Provide DSC style ConfigurationData for environment details to PSRemotely.
+	
+	.PARAMETER Path
+	The ConfigurationData can be supplied via a .psd1 or .json file.
+	PSRemotely will be able to work with all these configuration data sources, until it follows the DSC syntax for it.
+	
+	.PARAMETER ArgumentList
+	Key-Value pairs corresponding to variable-value which are passed to and made available on all the remote nodes.
+	This might be useful if you need a variable across on all nodes while executing ops validation tests.
+
+	.PARAMETER CredentialHash
+	Specify a hash with node name as key and credential object as value. PSRemotely will use this to open a PSSession
+	to the nodes.
+	
+	$CredHashTable = @{
+		'Compute-11'= $(Import-CliXML -Path .\Compute_Cred.xml);
+		'Storage-12'= $(Get-Credential)
+	}
+
+	.NOTES
+	Read the documentation hosted on GitHub for the project for using the DSL.
+	
+	.LINK
+	Node
+	Invoke-PSRemotely
+
+#>
 	[OutputType([String[]])]
 	[CmdletBinding(DefaultParameterSetName='ConfigurationData')]
     param 
     (       
-        # The body script block.
         [Parameter(Mandatory = $true, Position = 0)]
         [ScriptBlock] $body,
 
-		# DSC style configuration data , follows the same syntax
 		[Parameter(Position = 1,
 					ParameterSetName='ConfigurationData')]
         [hashtable] $configurationData,
 		
-		# Specify the path to a file (.json or .psd1) which houses the configuration data
 		[Parameter(Position=1, ParameterSetName='ConfigDataFromFile')]
 		[ValidateScript({ '.json','.psd1'  -contains $([System.IO.Path]::GetExtension($_))})] 
 		[ValidateScript({Test-Path -Path $_})]
