@@ -97,7 +97,7 @@ Function Invoke-PSRemotely {
         PSRemotely
 
     .LINK
-        https://github.com/RamblingCookieMonster/PSRemotely
+        https://github.com/DexterPOSH/PSRemotely
 
 #>
     [CmdletBinding(DefaultParameterSetName='BootStrap')]

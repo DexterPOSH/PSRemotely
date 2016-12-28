@@ -132,7 +132,8 @@ Thanks goes to :
 - [Remotely project](https://github.com/PowerShell/Remotely) 
 - [Ravikanth Chaganti](https://twitter.com/ravikanth) - For all the help with the ideas and motivation behind the scenes.
 - Warren Frame's [PSDeploy module ](https://github.com/RamblingCookieMonster/PSDeploy) - have been following Warren's module & documentation structure to organize.
-- PowerShell comunity & fellow MVPs, who are fantastic at helping each other.
+- [Pester module] (https://github.com/pester/pester), PSDesiredStateConfiguration module for borrowing some of the ideas.
+- PowerShell community & fellow MVPs, who are fantastic at helping each other.
 
 ## TO DO 
 
