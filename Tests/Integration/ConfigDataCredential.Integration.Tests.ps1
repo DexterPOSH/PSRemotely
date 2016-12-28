@@ -2,9 +2,11 @@ if(-not $ENV:BHProjectPath)
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
-Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
-Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-
+$PSVersion = $PSVersionTable.PSVersion.Major
+# PSRemotely Test file to be used for this Integration test.
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
+$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
+$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
@@ -12,11 +14,14 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 		Import-Module -Name $PSItem.FullName -Force
 	}
 
-$PSVersion = $PSVersionTable.PSVersion.Major
-# PSRemotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataCredential.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+
+# use a dummy artifact with PSRemotely-
+Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"   
+
+Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
+
 
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
 New-User -Credential $UserCred 
@@ -26,10 +31,6 @@ Disable-LocalAccountTokenFilterPolicy
 
 try {
     Describe "PSRemotely ConfigData with Credential usage, with PS V$($PSVersion)" -Tag Integration {
-        # Arrange
-        # use a dummy artifact with PSRemotely-
-        Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
-        Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"   
 
         # Act, Invoke PSRemotely
         $Result = Invoke-PSRemotely -Script @{

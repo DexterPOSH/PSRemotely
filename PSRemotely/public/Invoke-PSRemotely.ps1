@@ -1,4 +1,3 @@
-
 Function Invoke-PSRemotely {
 <#
     .SYNOPSIS
@@ -114,8 +113,6 @@ Function Invoke-PSRemotely {
                     ParameterSetName='JSON')]
         [String]$JSONInput
 
-        
-
     )
     BEGIN {
         
@@ -175,6 +172,7 @@ Function Invoke-PSRemotely {
             }
             'BootStrap' {
                 # Path to a Script housing PSRemotely tests, it should run the script as it script
+                # Credits to Pester's Invoke-Pester for the below logic
                 Write-VerboseLog -Message 'ParameterSet - BootStrap'
                 $invokeTestScript = {
                     param (
@@ -218,7 +216,6 @@ Function Invoke-PSRemotely {
 }
 
 
-
 function ResolveTestScripts
 {
     param ([object[]] $Path)
@@ -256,7 +253,7 @@ function ResolveTestScripts
                 $extension = [System.IO.Path]::GetExtension($unresolvedPath)
                 $IsPSRemotelyInName = [System.IO.Path]::GetFileNameWithoutExtension($unresolvedPath)
                 $IsNameEndingwithPSRemotely = $IsPSRemotelyInName.EndsWith('PSRemotely',$true,[System.Globalization.CultureInfo]::InvariantCulture)
-                if (($extension -ne '.ps1') -and (IsNameEndingwithPSRemotely)){
+                if (($extension -ne '.ps1') -or ( -not $IsNameEndingwithPSRemotely)){
                     Write-Error "Script path '$unresolvedPath' is not a *.PSRemotely.ps1 file."
                 }
                 else

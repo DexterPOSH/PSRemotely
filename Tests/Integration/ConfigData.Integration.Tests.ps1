@@ -2,16 +2,6 @@
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
 }
-Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
-Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-
-# Import the TestHelpers
-Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
-	Foreach-Object {
-		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue
-		Import-Module -Name $PSItem.FullName -Force
-	}
-
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
@@ -20,19 +10,30 @@ $RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artifacts\Localhost
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromPSD1.PSRemotely.ps1")
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 $ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
+
+# Import the TestHelpers
+Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
+	Foreach-Object {
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue
+		Import-Module -Name $PSItem.FullName -Force
+	}
+
+# use a dummy artifact with PSRemotely-
+Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
+Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"   
+
+Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
+
+
 
 Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
     try {
         Describe "PSRemotely $([System.IO.Path]::GetFileName($RemotelyTestFile)) usage, with PS V$($PSVersion)" -Tag Integration {
             
-            # Arrange
-            # use a dummy artifact with PSRemotely-
-            Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
-            Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
-
             # Act, Invoke PSRemotely
             $Result = Invoke-PSRemotely -Script $RemotelyTestFile
-            $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
             # Assert
 
             # First verify that all the Node related details are stored in the PSRemotely global var

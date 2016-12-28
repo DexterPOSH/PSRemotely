@@ -81,8 +81,10 @@ function CreateSessions
 							$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node -Name $sessionName -SessionOption $PSSessionOption)  
 						}
 					}
-					$PSRemotely.SessionHashTable.Add($node, $sessionInfo)              
-				}               
+					$PSRemotely.SessionHashTable.Add($node, $sessionInfo)
+				}
+				# set the variables in the remote pssession
+				ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node] -ArgumentList $argumentList
 			}
 			break
 		}
@@ -93,21 +95,13 @@ function CreateSessions
 				$argumentList = $Script:argumentList.clone()
 				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
 				
-                if( $PSRemotely.SessionHashTable.ContainsKey($Node.NodeName)) {
-					 #-or ($PSRemotely.SessionHashTable.ContainsKey("[$($Node.NodeName)]"))) 
-                    # node present in the hash table, no need to create another session. Just re-intialize the variables in the session, added second condition for IPv6Addresse
-					ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
-                }
-                else {
-
-					 
+                if( -not $PSRemotely.SessionHashTable.ContainsKey($Node.NodeName)) {
 				    # SessionHashtable does not have an entry                              
 					$sessionName = "PSRemotely-" + $Node.NodeName
 					$existingPSSession = $existingPSSessions | Where-Object -Property Name -eq $SessionName  | select-Object -First 1                     
 					if ($existingPSSession) {
                         # if there is an open PSSession to the node then use it to create Session info object
 						$sessionInfo = CreateSessionInfo -Session $existingPSSession
-                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList	
 					}
                     else {
 						$PSSessionParams = @{
@@ -135,16 +129,16 @@ function CreateSessions
 						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
 						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
 						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
-                        ReinitializeSession -SessionInfo $sessionInfo -ArgumentList $argumentList
                     }
+					# Add the information to the session hashtable in $PSRemotel
 					$PSRemotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
-				
-			}
+				# set the variables in the remote pssession
+				ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node] -ArgumentList $argumentList
+			} # end foreach 
 			break
 		}
 	}
-    
 }
 
 function CreateLocalSession
@@ -210,7 +204,7 @@ Function ReinitializeSession {
         [ValidateNotNullOrEmpty()] $sessionInfo,
 
 		[Parameter(Position=1, Mandatory=$true)]
-		[ValidateNotNullOrEmpty()] 
+		[AllowNull()] 
 		[HashTable]$ArgumentList
 	)
 	TRY {
@@ -219,10 +213,12 @@ Function ReinitializeSession {
 	CATCH {
 		# TO DO : above fails some time. Check why.
 	}
-	Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
-		param($arglist)
-		foreach ($enum in $arglist.GetEnumerator()) {
-			New-Variable -Name $enum.Key -Value $enum.Value -Force
+	if ($ArgumentList) {
+		Invoke-Command -Session $sessionInfo.Session -ArgumentList $argumentList -ScriptBlock {
+			param($arglist)
+			foreach ($enum in $arglist.GetEnumerator()) {
+				New-Variable -Name $enum.Key -Value $enum.Value -Force
+			}
 		}
 	}
 }
