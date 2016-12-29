@@ -3,12 +3,18 @@ if($env:APPVEYOR_REPO_BRANCH -and $env:APPVEYOR_REPO_BRANCH -notlike "master")
 {
     $Verbose.add("Verbose",$True)
 }
+if(-not $ENV:BHProjectPath)
+{
+    Set-BuildEnvironment -Path $PSScriptRoot\..\..
+}
+
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-Import-Module $PSScriptRoot\..\..\Remotely -Force
+Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 
-InModuleScope -ModuleName Remotely {
+InModuleScope -ModuleName $ENV:BHProjectName {
     # Module Preamble - put initialization code here
     $ModuleRequired = @( # Array of the hashtables for FullyQualifedNames for modules
     @{
