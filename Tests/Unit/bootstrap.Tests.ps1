@@ -19,7 +19,7 @@ InModuleScope -ModuleName $ENV:BHProjectName {
     $ModuleRequired = @( # Array of the hashtables for FullyQualifedNames for modules
     @{
         ModuleName='Pester';
-		RequiredVersion='3.3.5';
+		ModuleVersion='3.3.5';
     },
 	@{
 		ModuleName='PoshSpec';
@@ -191,8 +191,73 @@ Describe "CreatePSRemotelyNodePath $PSVersion" -Tags UnitTest {
 }
 
 Describe "CopyRemotelyNodeModule $PSversion" -Tag UnitTest {
-	
+    	
+    Context 'Required module defined is not present in the PSRemotely lib folder' {
+        # Arrange
+        Mock -CommandName TestModulePresentInLib -MockWith {$false}
+        # Act        
+        # Assert
+        It 'Should throw a customized error, saying module not present in lib folder' {
+            {CopyRemotelyNodeModule -Session $Session -FullyQualifiedName $ModuleRequired[0] } |
+                Should Throw "Lib folder does not have a folder named $($ModuleRequired[0].ModuleName)\$($ModuleRequired[0].ModuleVersion), so it can't be copied to the PSRemotely node."
 
+            Assert-MockCalled -CommandName TestModulePresentInLib -Times 1 -Exactly -Scope Context
+        }
+    }
+
+    Context 'Required modules present locally, it should copy them to the Remotely node' {
+        # Arrange
+        Mock -CommandName TestModulePresentInLib -MockWith {$True}
+        Mock -CommandName CopyModuleFolderToRemotelyNode -ParameterFilter {
+            ($null -ne $Path) -and 
+            ($null -ne $Destination) -and
+            ($null -ne $Session)
+        }
+
+        # Act
+        CopyRemotelyNodeModule -Session $Session -FullyQualifiedName $ModuleRequired[0] 
+        # Assert
+        It 'Should first test if the module is present in the local lib folder' {
+            Assert-MockCalled -CommandName TestModulePresentInLib -TImes 1 -Exactly -Scope Context
+        }
+
+        It 'Should copy the module to the Remotely node' {
+            Assert-MockCalled -CommandName CopyModuleFolderToRemotelyNode -Times 1 -Exactly -Scope Context
+        }
+    }
+
+    Context 'While copying the modules to Remotely node, an error is thrown' {
+        # Arrange
+        Mock -CommandName TestModulePresentInLib -MockWith {$True}
+        Mock -CommandName CopyModuleFolderToRemotelyNode -MockWith {throw 'Copy failed'}
+        
+        # Act and Assert 
+        It 'Should throw the underlying error back' {
+            {CopyRemotelyNodeModule -Session $Session -FullyQualifiedName $ModuleRequired[0]} |
+                Should Throw 'Copy failed'
+        }
+    }
+}
+
+
+Describe "CopyModuleFolderToRemotelyNode $PSVersion" -Tag UnitTest {
+    
+    Context 'Creates and copies the required module folders recursively to the Remotely node' {
+        # Arrange
+		Mock -CommandName Invoke-Command -ParameterFilter { $ScriptBlock.ToString().Equals('$null = New-Item -Path $Using:Destination -ItemType Directory')}
+        Mock -CommandName Copy-Item -MockWith {$null}
+		# Act
+		CopyModuleFolderToRemotelyNode -Session $session -path 'C:\temp' -Destination 'C:\'
+
+		# Assert
+		It 'Should call Invoke-Command to create the Destination directory for the module on Remotely Node' {
+			Assert-MockCalled -CommandName Invoke-Command -Times 1 -Exactly -Scope Context
+		}
+
+        It 'Should copy the required folder and its content over PSRemoting Session' {
+            Assert-MockCalled -CommandName Copy-Item -Times 1 -Exactly -Scope Context
+        }   
+    }
 }
 
 }     
