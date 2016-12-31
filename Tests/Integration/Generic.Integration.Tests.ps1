@@ -5,7 +5,7 @@ if(-not $ENV:BHProjectPath)
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.tests.ps1"
+$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.ps1"
 $RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
 $ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 
@@ -20,7 +20,10 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 Describe "PSRemotely only accepts *.PSRemotely.ps1 extension files" {
 
+    $null = Invoke-PSRemotely -Script $RemotelyTestFile -ErrorVariable PSRemotelyError 2>&1
+
     It 'Should throw an error' {
-        {Invoke-PSRemotely -Script $RemotelyTestFile} | Should Throw
+        $PSRemotelyError | Should Not BeNullOrEmpty
+        $PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.' | Should be $True 
     }
 }
