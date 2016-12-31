@@ -1,50 +1,148 @@
-Synopsis
+
+PSRemotely
 ============
-Executes a script block against a remote runspace. Remotely can be used with Pester for executing script blocks on a remote system.
+
+PSRemotely, started as a fork of the [Remotely project](https://github.com/PowerShell/Remotely) and over the time grew out of it.
+In a nutshell it let's you execute Pester tests against a remote machine. PSRemotely can use PoshSpec style infrastucture validation tests too.
+
+Note - In the code & documentation the term 'Remotely' and 'PSRemotely' refer to the same.
+
+It supports copying of the modules and artefacts to the remote node before the Pester tests are run. 
 
 Description
 ======================
-The contents on the Remotely block are executed on a remote runspace. The connection information of the runspace is supplied using the -Nodes parameter or as the argument to the first positional parameter. By default, this assumes the local credentials have access to the remote session configuration on the target nodes. In case the credentials are different, you can use -CredentialHash to provide the node specific credentials.
+PSRemotely exposes a DSL which makes it easy to run Pester tests on the remote nodes.
+If you already have pester tests then you need to just wrap them inside the PSRemotely keyword and specify the node information using the Node keyword.
 
-To get access to the streams, use GetVerbose, GetDebugOutput, GetError, GetProgressOutput,
-GetWarning on the resultant object.
+PSRemotely workflow is as under :
 
-Example
-============
-Usage in Pester:
+1. Read PSRemotely.json file to determine the path & modules to be used on the remote nodes.
+2. Bootstrap the remote nodes, this involves 
+    - Testing the remote node path exists.
+    - All the modules required are copied from the Lib/ folder to the remote node.
+3. Drop the Pester tests (Describe blocks) as individual tests file on the remote node. 
+    Also copy the items defined in the PSRemotely.json, which are placed under Artifacts/ folder inside local PSRemotely folder.
+4. Invoke the tests using background jobs on the remote nodes and wait for these jobs to complete, finally process and output a JSON object back.
+5. It also exports a global variable named $PSRemotely to which the Node bootstrap map and PSSession information is stored.
+
+## Remote Ops validation
+
+Well this is a term coined by us for some of the infrastucture validation being done for Engineered solutions.
+So taking liberty to use this here. 
+
+Support, you already have below existing Pester test for some nodes in our environment:
 
 ```powershell
-$CredHash = @{
-	'VM1' = (Get-Credential)
-}
-
-Describe "Add-Numbers" {
-    It "adds positive numbers on two remote systems" {
-        Remotely 'VM1','VM2' { 2 + 3 } | Should Be 5
+Describe 'Bits Service test' {
+    
+    $BitsService = Get-Service -Name Bits
+    
+    It "Should have a service named bits" {
+        $BitsService | Should Not BeNullOrEmpty
     }
-
-    It "gets verbose message" {
-        $sum = Remotely 'VM1','VM2' { Write-Verbose -Verbose "Test Message" }
-        $sum.GetVerbose() | Should Be "Test Message"
-    }
-
-    It "can pass parameters to remote block with different credentials" {
-        $num = 10
-        $process = Remotely 'VM1' { param($number) $number + 1 } -ArgumentList $num -CredentialHash $CredHash
-        $process | Should Be 11
+    
+    it 'Should be running' {
+        $BitsService.Status | Should be 'Running'
     }
 }
 ```
+If you want to run the very same tests on the remote node named say AD, then below is how you use PSRemotely.
 
-Links
-============
-* https://github.com/PowerShell/Remotely
-* https://github.com/pester/Pester
+Usage with PSRemotely:
 
-Running Tests
-=============
-Pester-based tests are located in ```<branch>/Remotely.Tests.ps1```
+```powershell
+PSRemotely {
+	
+    Node AD {
+		
+        Describe 'Bits Service test' {
+		
+            $BitsService = Get-Service -Name Bits
+            
+            It "Should have a service named bits" {
+                $BitsService | Should Not BeNullOrEmpty
+            }
+            
+            It 'Should be running' {
+                $BitsService.Status | Should be 'Running'
+            }
+        }		
+	}
+}
+```
+Once you have the tests file ready, below is how you invoke the PSRemotely framework to start the remote ops validation : 
 
-* Ensure Pester is installed on the machine
-* Run tests:
-    .\Remotely.Tests.ps1
+```powershell
+Invoke-PSRemotely -Script <Path_to_Tests.ps1>
+```
+
+Output of the above is a JSON object, if the tests pass then an empty JSON object array of *TestResult* is returned 
+otherwise the Error record thrown by Pester is returned :
+
+```json
+{
+    "Status":  true,
+    "NodeName":  "AD",
+    "Tests":  [
+                  {
+                      "TestResult":  [
+
+                                     ],
+                      "Result":  true,
+                      "Name":  "Service test"
+                  }
+              ]
+}
+```
+
+
+## Initial PSRemotely setup
+
+```powershell
+# One time setup
+    # Download the repository
+    # Unblock the zip
+    # Extract the PSRemotely folder to a module path (e.g. $env:USERPROFILE\Documents\WindowsPowerShell\Modules\)
+
+    #Simple alternative, if you have PowerShell 5, or the PowerShellGet module:
+        Install-Module PSRemotely
+
+# Import the module.
+    Import-Module PSRemotely    # Alternatively, Import-Module \\Path\To\PSRemotely
+
+# Get commands in the module
+    Get-Command -Module PSRemotely
+
+# Get help for the module and a command
+    
+    Get-Help Invoke-PSRemotely -full
+```
+## More Information
+
+The [PSRemotely docs]() will include more information, including :
+
+* PSRemotely Basics
+* PSRemotely Examples
+* PSRemotely How Tos
+
+## Notes
+
+Thanks goes to :
+
+- [Remotely project](https://github.com/PowerShell/Remotely) 
+- [Ravikanth Chaganti](https://twitter.com/ravikanth) - For all the help with the ideas and motivation behind the scenes.
+- Warren Frame's [PSDeploy module ](https://github.com/RamblingCookieMonster/PSDeploy) - have been following Warren's module & documentation structure to organize.
+- [Pester module] (https://github.com/pester/pester), PSDesiredStateConfiguration module for borrowing some of the ideas.
+- PowerShell community & fellow MVPs, who are fantastic at helping each other.
+
+## TO DO 
+
+PSRemotely in its current form works for our needs to validate some of the Engineered solutions.
+But it has the potential to grow to be much bigger, below are some of the items in the wishlist :
+
+- Use PowerShell classes, and add support for providers for nodes running either On-prem or on Cloud (AWS or Azure).
+- Integrate with JEA, since PSRemotely uses PSSession endpoints these can be locked down using JEA on the nodes.
+- More unit tests, lacking far behind in this aspect.
+- Faster background processing of the remote node jobs, using runspaces.
+
+Feel free to submit any ideas, bugs or pull requests.

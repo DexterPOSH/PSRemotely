@@ -1,0 +1,24 @@
+site_name: PSRemotely Docs
+repo_url: https://github.com/DexterPOSH/PSRemotely
+theme: readthedocs
+pages:
+  - Home: index.md
+  - PSRemotely Basics:
+    - Quick Start: Quick-Start.-Installation-and-Example.md
+    - PSDeploy Configuration Files: PSRemotely-Configuration-Files.md
+    - PSRemotely variable: PSRemotely-Remotely-Variable.md
+    - PSRemotely workflow: PSRemotely-workflow.md
+  - PSRemotely Examples:
+    - Basic : Example-Basic.md
+    - Using Configuration Data : Example-ConfigurationData.md
+    - Using Credential Hashtable: Example-CredentialHash.md
+    - Using Configuration Data and Credential : Example-ConfigurationData-Credential.md
+    - Using custom Variables : Example-Custom-Variables.md
+  - How Do I...:
+    - Invoke PSRemotely: Invoke-PSRemotely.md
+    - TroubleShoot : PSRemotely.TroubleShoot.md
+    - Copy Artifacts to PSRemotely Nodes: PSRemotely.Artifacts.md
+    - Debug failures : PSRemotely.Debug.md
+    - Re run a failed test: PSRemotely.ReRunTest.md
+  - Advanced:
+    - Using PoshSpec with PSRemotely: PSRemotely-PoshSpec.md

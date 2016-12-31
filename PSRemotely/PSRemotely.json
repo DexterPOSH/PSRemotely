@@ -1,0 +1,12 @@
+{
+    "PSRemotelyNodePath": "C:\\Temp\\PSRemotely",
+    "modulesRequired": [
+        {
+            "Modulename": "Pester",
+            "ModuleVersion": "3.3.14"
+        }
+    ],
+    "ArtifactsRequired":[
+       "DeploymentManifest.xml" 
+    ]
+}
