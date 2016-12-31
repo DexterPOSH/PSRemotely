@@ -99,9 +99,8 @@ Function Invoke-PSRemotely {
         https://github.com/DexterPOSH/PSRemotely
 
 #>
-    [CmdletBinding(DefaultParameterSetName='BootStrap')]
+    [CmdletBinding(DefaultParameterSetName='BootStrap',SupportsShouldProcess=$True)]
     param(
-
         [Parameter(Position=-0,
                     Mandatory=$False,
                     ParameterSetName='BootStrap',
@@ -131,9 +130,9 @@ Function Invoke-PSRemotely {
                 if (TestRemotelyNodeBootStrapped -ComputerName $Object.NodeName) {
                     # Node is bootstrapped, get the corresponding session object
                     $session = $PSRemotely['sessionHashTable'].GetEnumerator() | 
-                                where -Property Name -like "*$($Object.NodeName)*" |
-                                select -ExpandProperty Value | 
-                                select -ExpandProperty Session
+                                Where-Object -Property Name -like "*$($Object.NodeName)*" |
+                                Select-Object -ExpandProperty Value | 
+                                Select-Object -ExpandProperty Session
                     
                     # build the splat hashtable
                    $invokeTestParams = @{
