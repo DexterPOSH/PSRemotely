@@ -64,7 +64,7 @@ InModuleScope -ModuleName $ENV:BHProjectName {
 
             }
 
-            It 'Should fail id duplicate NodeName in the configuration data' {
+            It 'Should fail if duplicate NodeName in the configuration data' {
                 $ConfigData = @{
 			                AllNodes=@(
                                 		@{

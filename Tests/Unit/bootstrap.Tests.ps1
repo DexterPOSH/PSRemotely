@@ -1,8 +1,3 @@
-$Verbose = @{}
-if($env:APPVEYOR_REPO_BRANCH -and $env:APPVEYOR_REPO_BRANCH -notlike "master")
-{
-    $Verbose.add("Verbose",$True)
-}
 if(-not $ENV:BHProjectPath)
 {
     Set-BuildEnvironment -Path $PSScriptRoot\..\..
@@ -177,7 +172,10 @@ Describe "CreatePSRemotelyNodePath $PSVersion" -Tags UnitTest {
 
 	Context "Check if the correct path argument gets passed to the Invoke-Command" {
 		# Arrange
-		Mock -CommandName Invoke-Command -ParameterFilter { $ScriptBlock.ToString().Equals('$null = New-Item -Path "$using:Path\lib\Artifacts" -ItemType Directory -Force')}
+		Mock -CommandName Invoke-Command -ParameterFilter { 
+            $ScriptBlock.ToString().Trim().Equals('$null = New-Item -Path "$using:Path\lib\Artifacts" -ItemType Directory -Force') -and
+            ($null -ne $Session)
+        }
 
 		# Act
 		CreatePSRemotelyNodePath -Session $session -path 'C:\temp'
