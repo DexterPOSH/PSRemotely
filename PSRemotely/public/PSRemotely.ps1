@@ -100,9 +100,9 @@ function PSRemotely
 
 				# Define the AllNodes variable in current scope
 				Write-VerboseLog -Message 'Creating the AllNodes global scope variable'
-				New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope  Global -Force
+				New-Variable -Name AllNodes -Value $configurationData.AllNodes -Scope Script  -Force
 				
-				if ($Global:AllNodes.NodeName) {
+				if ($AllNodes.NodeName) {
 					Write-VerboseLog -Message 'Creating sessions'
 					CreateSessions -ConfigData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
 
@@ -145,7 +145,7 @@ function PSRemotely
 		
 		& $Body # invoke the body
 		Write-VerboseLog -Message 'Clearing the AllNodes global variable'
-		Remove-Variable -Name AllNodes -Scope Global -Force -ErrorAction SilentlyContinue
+		Remove-Variable -Name AllNodes -Scope Script -Force -ErrorAction SilentlyContinue
 	
 	}
 

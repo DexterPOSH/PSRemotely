@@ -49,7 +49,7 @@ Function Node {
 				Write-VerboseLog -Message "No sessions found in SessionHashTable"
 				# this might mean that the Configuration data was never supplied
 				# Check if the AllNodes Script var is present is not null
-				if(-not $Global:AllNodes) {
+				if(-not $AllNodes) {
 					Write-VerboseLog -Message "AllNodes variable is not created. Implies configuration data was not supplied"
 					Write-VerboseLog -Message "Creating sessions"
 					CreateSessions -Nodes $Name  -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
@@ -125,7 +125,7 @@ Function Node {
 							[string[]]$tag
 						)
 						$PSRemotely.modulesRequired | 
-						Foreach {
+						Foreach-Object {
 							$moduleName = $PSitem.ModuleName
 							$moduleVersion = $Psitem.ModuleVersion
 							Import-Module "$($PSRemotely.PSRemotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
@@ -143,7 +143,7 @@ Function Node {
 							# Add the tag
 							$invokePesterParams.Add('Tag', $Tag) 
 						}
-						Write-Verbose -Verbose -Message  "Invoking Pester with arguments $($invokePesterParams.GetEnumerator() | % {$_.Key, $_.Value})"
+						Write-Verbose -Verbose -Message  "Invoking Pester with arguments $($invokePesterParams.GetEnumerator() | Foreach-Object {$_.Key, $_.Value})"
 						if ($Node) {
 								Invoke-Pester -Script @{Path="$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1"; Parameters=@{Node=$Node}} @invokePesterParams
 							}
