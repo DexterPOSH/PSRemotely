@@ -134,7 +134,7 @@ function CreateSessions
 					$PSRemotely.SessionHashTable.Add($($node.NodeName), $sessionInfo)
 				}
 				# set the variables in the remote pssession
-				ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node] -ArgumentList $argumentList
+				ReinitializeSession -SessionInfo $PSRemotely.sessionHashTable[$node.NodeName] -ArgumentList $argumentList
 			} # end foreach 
 			break
 		}
