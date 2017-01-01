@@ -7,7 +7,7 @@ if(-not $ENV:BHProjectPath)
 $PSVersion = $PSVersionTable.PSVersion.Major
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-
+$Session = New-PSSession -ComputerName Localhost
 
 InModuleScope -ModuleName $ENV:BHProjectName {
     # Module Preamble - put initialization code here
@@ -21,7 +21,7 @@ InModuleScope -ModuleName $ENV:BHProjectName {
 		ModuleVersion='1.1.10';
 	})
     Get-Service -Name WinRM | Restart-Service
-    $Session = New-PSSession -ComputerName Localhost
+    
     
 Describe "BootStrapRemotelyNode $PSVersion" -Tags UnitTest {
         
@@ -76,6 +76,7 @@ Describe "BootStrapRemotelyNode $PSVersion" -Tags UnitTest {
 
         It "Should archive the existing tests files on the PSRemotely path on the node" {
             Assert-MockCalled -CommandName CleanupPSRemotelyNodePath -Times 1 -Exactly -Scope Context
+
         }
 
         It 'Should update the PSRemotely variable at the beginning and end of the bootstrap function' {
