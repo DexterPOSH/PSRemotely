@@ -120,7 +120,7 @@ otherwise the Error record thrown by Pester is returned :
 ```
 ## More Information
 
-The [PSRemotely docs]() will include more information, including :
+The [PSRemotely docs](psremotely.readthedocs.io) will include more information, including :
 
 * PSRemotely Basics
 * PSRemotely Examples
