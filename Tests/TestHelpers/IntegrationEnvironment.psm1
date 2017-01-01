@@ -10,8 +10,10 @@
 
 Function Clear-PSRemotelyNodePath {
     param($Remotely)
-
-    Remove-Item -Path $Global:PSRemotely.PSRemotelyNodePath -Recurse -Force
+    if (Test-Path $Global:PSRemotely.PSRemotelyNodePath ) {
+        Remove-Item -Path $Global:PSRemotely.PSRemotelyNodePath -Recurse -Force
+    }
+    
 }
 
 # Credits : Picked these helpers from the DSC Resources repo 
@@ -183,7 +185,7 @@ Function Expand-ComputerName {
 
 Function Copy-DummyArtifact {
     param($Path)
-    New-Item -ItemType File -Force -Path $Path
+    $null = New-Item -ItemType File -Force -Path $Path
     Set-Content -Path $Path -Value 'Dummy' -Force -ErrorAction SilentlyContinue
 }
 
