@@ -7,7 +7,7 @@ if(-not $ENV:BHProjectPath)
 $PSVersion = $PSVersionTable.PSVersion.Major
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
-$Session = New-PSSession -ComputerName Localhost
+$Session = New-PSSession -ComputerName Localhost -EnableNetworkAccess
 
 InModuleScope -ModuleName $ENV:BHProjectName {
     # Module Preamble - put initialization code here
