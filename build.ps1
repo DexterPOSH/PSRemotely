@@ -47,6 +47,10 @@ Get-PackageProvider -Name NuGet -ForceBootstrap | Out-Null
 
 Resolve-Module Psake,  Pester, BuildHelpers, PSScriptAnalyzer
 
+# Setting the default value for New-PSSession to use the EnabletNetworkAccess switch
+# Found an issue with the Appveyor VM, which won't let the tests in place create the loopback sessions.
+$PSDefaultParameterValues=@{"New-PSSession:EnableNetworkAccess"=$True}
+
 Set-BuildEnvironment
 
 Invoke-psake .\psake.ps1

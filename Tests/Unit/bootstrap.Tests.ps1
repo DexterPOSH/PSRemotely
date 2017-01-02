@@ -21,7 +21,7 @@ InModuleScope -ModuleName $ENV:BHProjectName {
 		ModuleVersion='1.1.10';
 	})
     Get-Service -Name WinRM | Restart-Service
-    
+    $Session = New-PSSession -ComputerName Localhost -EnableNetworkAccess
     
 Describe "BootStrapRemotelyNode $PSVersion" -Tags UnitTest {
         
