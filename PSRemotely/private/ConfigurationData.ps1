@@ -1,3 +1,4 @@
+# TO DO - Rename the below to Assert-ConfigData
 Function Test-ConfigData {
 	[CmdletBinding()]
 	param(
@@ -24,7 +25,7 @@ Function Test-ConfigData {
 		# Check for the duplicate nodeName Values
 		if ($NodeNames.Contains($node['NodeName'])) {
 			# Duplicate node in the list
-			throw ("There are duplicated NodeNames '{0}' in the configurationData passed in." -f $node['NodeName'])
+			throw ("There is a duplicate NodeName '{0}' in the configurationData passed in." -f $node['NodeName'])
 		}
 
 		$null = $NodeNames.Add($node['NodeName'])
@@ -62,6 +63,7 @@ Function Update-ConfigData {
 	# Remove the node named *
 	$ConfigurationData['AllNodes'] = $ConfigurationData['AllNodes'] | Where-Object -Property 'NodeName' -ne '*'
 
+	# is the below needed, the changes are directly done by reference to the input
 	Write-Output -InputObject $ConfigurationData
 }
 
