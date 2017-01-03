@@ -1,12 +1,27 @@
+<#
+.Synopsis
+	Build script invoked by Invoke-Build.
+
+.Description
+	TODO: Declare build parameters as standard script parameters. Parameters
+	are specified directly for Invoke-Build if their names do not conflict.
+	Otherwise or alternatively they are passed in as "-Parameters @{...}".
+#>
+
+# TODO: [CmdletBinding()] is optional but recommended for strict name checks.
+[CmdletBinding()]
+param(
+)
 # PSake makes variables declared here available in other scriptblocks
 # Init some things
-Properties {
+# TODO: Move some properties to script param() in order to use as parameters.
+
     # Find the build folder based on build system
-        $ProjectRoot = $ENV:BHProjectPath
-        if(-not $ProjectRoot)
-        {
-            $ProjectRoot = $PSScriptRoot
-        }
+    $ProjectRoot = $ENV:BHProjectPath
+    if(-not $ProjectRoot)
+    {
+        $ProjectRoot = $PSScriptRoot
+    }
 
     $Timestamp = Get-date -uformat "%Y%m%d-%H%M%S"
     $PSVersion = $PSVersionTable.PSVersion.Major
@@ -18,11 +33,11 @@ Properties {
     {
         $Verbose = @{Verbose = $True}
     }
-}
 
-Task Default -Depends Deploy
+# TODO: Default task. If it is the first then any name can be used instead.
+task . Deploy
 
-Task Init {
+task Init {
     $lines
     Set-Location $ProjectRoot
     "Build System Details:"
@@ -30,7 +45,7 @@ Task Init {
     "`n"
 }
 
-Task Test -Depends Init  {
+task Test Init, {
     $lines
 
     foreach ($TestType in @('Unit','Integration')) {
@@ -65,7 +80,7 @@ Task Test -Depends Init  {
    
 }
 
-Task Build -Depends Test {
+task Build Test, {
     $lines
     
     # Load the module, read the exported functions, update the psd1 FunctionsToExport
@@ -83,7 +98,7 @@ Task Build -Depends Test {
     }
 }
 
-Task Deploy -Depends Build {
+task Deploy Build, {
     $lines
 
     $Params = @{

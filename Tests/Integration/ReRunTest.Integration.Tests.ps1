@@ -21,7 +21,8 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
-		Import-Module -Name $PSItem -verbose -Force
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue # reload the module, the script module might have changes
+		Import-Module -Name $PSItem.FullName -Force
 	}
 
 try {
@@ -117,7 +118,7 @@ try {
 				}
 
 				It 'Should return more details about the test failed in the TestResult' {
-					$Object.Tests[0].TestResult.Describe | Should BeExactly 'Bits Service Test'
+					$Object.Tests[0].TestResult.Describe | Should Be 'Bits Service Test'
 					$Object.Tests[0].TestResult.Name | Should BeExactly 'Should be running'
 					$Object.Tests[0].TestResult.Result | Should Be 'Failed'
 					$Object.Tests[0].TestResult.ErrorRecord | Should NOT BeNullOrEmpty
@@ -187,7 +188,7 @@ try {
 				}
 
 				It 'Should return more details about the test failed in the TestResult' {
-					$Object.Tests[0].TestResult.Describe | Should BeExactly 'Bits Service Test'
+					$Object.Tests[0].TestResult.Describe | Should Be 'Bits Service Test'
 					$Object.Tests[0].TestResult.Name | Should BeExactly 'Should be running'
 					$Object.Tests[0].TestResult.Result | Should Be 'Failed'
 					$Object.Tests[0].TestResult.ErrorRecord | Should NOT BeNullOrEmpty
