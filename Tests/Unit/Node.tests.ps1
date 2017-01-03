@@ -8,12 +8,13 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
-$Session = New-PSSession -ComputerName Localhost
+
 
 
 InModuleScope -ModuleName $ENV:BHProjectName {
     
     Get-Service -Name WinRM | Restart-Service
+    $Session = New-PSSession -ComputerName Localhost -EnableNetworkAccess
 
     Describe 'Node' {
 
