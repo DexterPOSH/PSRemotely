@@ -1,3 +1,4 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](http://psremotely.readthedocs.io/en/latest/?badge=latest)](http://psremotely.readthedocs.io/en/latest/?badge=latestt)
 
 PSRemotely
 ============
@@ -30,7 +31,7 @@ PSRemotely workflow is as under :
 Well this is a term coined by us for some of the infrastucture validation being done for Engineered solutions.
 So taking liberty to use this here. 
 
-Support, you already have below existing Pester test for some nodes in our environment:
+Suppose, you already have below existing Pester test for some nodes in our environment:
 
 ```powershell
 Describe 'Bits Service test' {
@@ -119,7 +120,7 @@ otherwise the Error record thrown by Pester is returned :
 ```
 ## More Information
 
-The [PSRemotely docs]() will include more information, including :
+The [PSRemotely docs](psremotely.readthedocs.io) will include more information, including :
 
 * PSRemotely Basics
 * PSRemotely Examples

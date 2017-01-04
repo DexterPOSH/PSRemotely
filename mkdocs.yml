@@ -18,7 +18,6 @@ pages:
     - Invoke PSRemotely: Invoke-PSRemotely.md
     - TroubleShoot : PSRemotely.TroubleShoot.md
     - Copy Artifacts to PSRemotely Nodes: PSRemotely.Artifacts.md
-    - Debug failures : PSRemotely.Debug.md
     - Re run a failed test: PSRemotely.ReRunTest.md
   - Advanced:
     - Using PoshSpec with PSRemotely: PSRemotely-PoshSpec.md
