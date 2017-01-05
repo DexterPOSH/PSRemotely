@@ -51,4 +51,4 @@ Resolve-Module InvokeBuild,  Pester, BuildHelpers, PSScriptAnalyzer, PSDeploy
 Set-BuildEnvironment
 
 Invoke-Build -File .\InvokeBuild.ps1
-exit ( [int]( -not $psake.build_success ) )
+# exit ( [int]( -not $psake.build_success ) )
