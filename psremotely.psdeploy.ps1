@@ -22,7 +22,8 @@ if(
     $env:BHPSModulePath -and
     $env:BHBuildSystem -ne 'Unknown' -and
     $env:BHBranchName -eq "master" -and
-    $env:BHCommitMessage -match '!deploy'
+    $env:BHCommitMessage -match '!deploy' -and
+    $env:NugetApiKey -ne $Null
 )
 {
     Deploy Module {
@@ -40,7 +41,8 @@ else
     "Skipping deployment: To deploy, ensure that...`n" +
     "`t* You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
     "`t* You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
-    "`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage)" |
+    "`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage) `n" +
+    "`t* The NugetAPIKey in the environment varaible is not defined"|
         Write-Host
 }
 
