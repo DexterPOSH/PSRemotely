@@ -69,7 +69,7 @@ task Test Init, {
         # Need to tell psake or it will proceed to the deployment. Danger!
         if($TestResults.FailedCount -gt 0)
         {
-            Write-Error "Failed '$($TestResults.FailedCount)' $TestType tests, build failed"
+            throw "Failed '$($TestResults.FailedCount)' $TestType tests, build failed"
             break # break out if any of the test fails
         }
         "`n"
