@@ -20,7 +20,8 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 # use a dummy artifact with PSRemotely-
 Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
 Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
-Get-Service -Name Winrm | Restart-Service 
+Get-PSSession | Remove-PSSession # clean up older PSSessions created during the Unit tests
+Remove-Variable -Name AllNodes,PSRemotely -Scope Global -Force -ErrorAction SilentlyContinue # Just a fail safe
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
