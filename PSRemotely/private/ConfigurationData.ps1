@@ -25,7 +25,7 @@ Function Test-ConfigData {
 		# Check for the duplicate nodeName Values
 		if ($NodeNames.Contains($node['NodeName'])) {
 			# Duplicate node in the list
-			throw ("There is a duplicate NodeName '{0}' in the configurationData passed in." -f $node['NodeName'])
+			throw $("There is a duplicate NodeName '{0}' in the configurationData passed in." -f $node['NodeName'])
 		}
 
 		$null = $NodeNames.Add($node['NodeName'])
@@ -41,8 +41,8 @@ Function Update-ConfigData {
 		[Hashtable]$ConfigurationData
 	)
 
-	if ($configurationData.AllNodes | Where -Property NodeName -eq '*') {
-			$AllNodeSettings = $configurationData.AllNodes | Where -Property NodeName -eq '*'
+	if ($configurationData.AllNodes | Where-Object -Property NodeName -eq '*') {
+			$AllNodeSettings = $configurationData.AllNodes | Where-Object -Property NodeName -eq '*'
 	}
 
 	# Copy all the settings for the nodes

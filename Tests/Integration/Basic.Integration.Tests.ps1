@@ -12,14 +12,16 @@ $ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 	Foreach-Object {
-		Import-Module -Name $PSItem -verbose -Force
+		Remove-Module -Name $PSitem.BaseName -Force  -ErrorAction SilentlyContinue # reload the module, the script module might have changes
+		Import-Module -Name $PSItem.FullName -Force
 	}
 
 
 # use a dummy artifact with PSRemotely-
 Set-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
 Copy-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
-
+Get-PSSession | Remove-PSSession # clean up older PSSessions created during the Unit tests
+Remove-Variable -Name AllNodes,PSRemotely -Scope Global -Force -ErrorAction SilentlyContinue # Just a fail safe
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
@@ -155,7 +157,7 @@ try {
 				}
 
 				It 'Should return more details about the test failed in the TestResult' {
-					$Object.Tests[0].TestResult.Describe | Should BeExactly 'Bits Service Test'
+					$Object.Tests[0].TestResult.Describe | Should Be 'Bits Service Test'
 					$Object.Tests[0].TestResult.Name | Should BeExactly 'Should be running'
 					$Object.Tests[0].TestResult.Result | Should Be 'Failed'
 					$Object.Tests[0].TestResult.ErrorRecord | Should NOT BeNullOrEmpty

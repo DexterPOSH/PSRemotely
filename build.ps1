@@ -45,9 +45,10 @@ function Resolve-Module
 # Grab nuget bits, install modules, set build variables, start build.
 Get-PackageProvider -Name NuGet -ForceBootstrap | Out-Null
 
-Resolve-Module Psake,  Pester, BuildHelpers, PSScriptAnalyzer
+Resolve-Module InvokeBuild,  Pester, BuildHelpers, PSScriptAnalyzer, PSDeploy
+
 
 Set-BuildEnvironment
 
-Invoke-psake .\psake.ps1
-exit ( [int]( -not $psake.build_success ) )
+Invoke-Build -File .\InvokeBuild.ps1
+# exit ( [int]( -not $psake.build_success ) )

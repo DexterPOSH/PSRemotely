@@ -1,12 +1,27 @@
+<#
+.Synopsis
+	Build script invoked by Invoke-Build.
+
+.Description
+	TODO: Declare build parameters as standard script parameters. Parameters
+	are specified directly for Invoke-Build if their names do not conflict.
+	Otherwise or alternatively they are passed in as "-Parameters @{...}".
+#>
+
+# TODO: [CmdletBinding()] is optional but recommended for strict name checks.
+[CmdletBinding()]
+param(
+)
 # PSake makes variables declared here available in other scriptblocks
 # Init some things
-Properties {
+# TODO: Move some properties to script param() in order to use as parameters.
+
     # Find the build folder based on build system
-        $ProjectRoot = $ENV:BHProjectPath
-        if(-not $ProjectRoot)
-        {
-            $ProjectRoot = $PSScriptRoot
-        }
+    $ProjectRoot = $ENV:BHProjectPath
+    if(-not $ProjectRoot)
+    {
+        $ProjectRoot = $PSScriptRoot
+    }
 
     $Timestamp = Get-date -uformat "%Y%m%d-%H%M%S"
     $PSVersion = $PSVersionTable.PSVersion.Major
@@ -18,11 +33,11 @@ Properties {
     {
         $Verbose = @{Verbose = $True}
     }
-}
 
-Task Default -Depends Deploy
+# TODO: Default task. If it is the first then any name can be used instead.
+task . Deploy
 
-Task Init {
+task Init {
     $lines
     Set-Location $ProjectRoot
     "Build System Details:"
@@ -30,7 +45,7 @@ Task Init {
     "`n"
 }
 
-Task Test -Depends Init  {
+task Test Init, {
     $lines
 
     foreach ($TestType in @('Unit','Integration')) {
@@ -39,9 +54,6 @@ Task Test -Depends Init  {
         $TestFile = "{0}_{1}" -f $TestType, $TestFileFormat
         # Gather test results. Store them in a variable and file
         $TestResults = Invoke-Pester -Path "$ProjectRoot\Tests\$TestType" -PassThru -OutputFormat NUnitXml -OutputFile "$ProjectRoot\$TestFile"
-
-
-        "`n`tSTATUS: Integration testing with PowerShell $PSVersion"
 
         # In Appveyor?  Upload our tests! #Abstract this into a function?
         If($ENV:BHBuildSystem -eq 'AppVeyor')
@@ -57,7 +69,7 @@ Task Test -Depends Init  {
         # Need to tell psake or it will proceed to the deployment. Danger!
         if($TestResults.FailedCount -gt 0)
         {
-            Write-Error "Failed '$($TestResults.FailedCount)' $TestType tests, build failed"
+            throw "Failed '$($TestResults.FailedCount)' $TestType tests, build failed"
             break # break out if any of the test fails
         }
         "`n"
@@ -65,7 +77,7 @@ Task Test -Depends Init  {
    
 }
 
-Task Build -Depends Test {
+task Build Test, {
     $lines
     
     # Load the module, read the exported functions, update the psd1 FunctionsToExport
@@ -83,7 +95,7 @@ Task Build -Depends Test {
     }
 }
 
-Task Deploy -Depends Build {
+task Deploy Build, {
     $lines
 
     $Params = @{

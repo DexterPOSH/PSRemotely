@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](http://psremotely.readthedocs.io/en/latest/?badge=latest)](http://psremotely.readthedocs.io/en/latest/?badge=latestt)
+[![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](https://readthedocs.org/projects/psremotely/badge/?version=latest)](https://readthedocs.org/projects/psremotely/badge/?version=latest)
 
 PSRemotely
 ============
@@ -31,7 +31,7 @@ PSRemotely workflow is as under :
 Well this is a term coined by us for some of the infrastucture validation being done for Engineered solutions.
 So taking liberty to use this here. 
 
-Suppose, you already have below existing Pester test for some nodes in our environment:
+Suppose, you already have below Pester test for some nodes in our environment:
 
 ```powershell
 Describe 'Bits Service test' {
@@ -47,7 +47,8 @@ Describe 'Bits Service test' {
     }
 }
 ```
-If you want to run the very same tests on the remote node named say AD, then below is how you use PSRemotely.
+If you want to target the very same tests on the remote node named say Node1,Node2 & Node3 from your current workstation, you can use PSRemotely.
+
 
 Usage with PSRemotely:
 
@@ -71,10 +72,10 @@ PSRemotely {
 	}
 }
 ```
-Once you have the tests file ready, below is how you invoke the PSRemotely framework to start the remote ops validation : 
+Once you have the tests file ready , save it with a <FileName>.PSRemotely.ps1 extension, below is how you invoke the PSRemotely framework to start the remote ops validation : 
 
 ```powershell
-Invoke-PSRemotely -Script <Path_to_Tests.ps1>
+Invoke-PSRemotely -Script <FileName>.PSRemotely.ps1
 ```
 
 Output of the above is a JSON object, if the tests pass then an empty JSON object array of *TestResult* is returned 
@@ -90,7 +91,7 @@ otherwise the Error record thrown by Pester is returned :
 
                                      ],
                       "Result":  true,
-                      "Name":  "Service test"
+                      "Name":  "Bits Service test"
                   }
               ]
 }
@@ -120,7 +121,7 @@ otherwise the Error record thrown by Pester is returned :
 ```
 ## More Information
 
-The [PSRemotely docs](psremotely.readthedocs.io) will include more information, including :
+The [PSRemotely docs](http://psremotely.readthedocs.io/) will include more information, including :
 
 * PSRemotely Basics
 * PSRemotely Examples
@@ -139,11 +140,11 @@ Thanks goes to :
 ## TO DO 
 
 PSRemotely in its current form works for our needs to validate some of the Engineered solutions.
-But it has the potential to grow to be much bigger, below are some of the items in the wishlist :
+But it has the potential to grow into something bigger, below are some of the items in the wishlist :
 
 - Use PowerShell classes, and add support for providers for nodes running either On-prem or on Cloud (AWS or Azure).
 - Integrate with JEA, since PSRemotely uses PSSession endpoints these can be locked down using JEA on the nodes.
-- More unit tests, lacking far behind in this aspect.
+- More unit tests, lacking far behind in this aspect. More focus on it once we start working with the classes implementation.
 - Faster background processing of the remote node jobs, using runspaces.
 
 Feel free to submit any ideas, bugs or pull requests.

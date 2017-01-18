@@ -7,6 +7,6 @@
         }
     ],
     "ArtifactsRequired":[
-       "DeploymentManifest.xml" 
+       "" 
     ]
 }

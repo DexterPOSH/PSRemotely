@@ -28,6 +28,9 @@ $PSRemotely = ConvertPSObjectToHashTable -InputObject $jsonObject
 # module variables
 $PSRemotely.Add('NodeMap', @())
 $PSRemotely.Add('sessionHashTable', @{})
+# Setting the default value for New-PSSession to use the EnabletNetworkAccess switch
+# Found an issue with the Appveyor VM, which won't let the tests in place create the loopback sessions.
+$PSDefaultParameterValues=@{"New-PSSession:EnableNetworkAccess"=$True}
 
 # create an alias for PSRemotely
 New-Alias -Name Remotely -Value PSRemotely -Description "Remote Ops validation, using PSRemotely."
