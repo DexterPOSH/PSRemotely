@@ -57,8 +57,8 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
 
                 It 'Should have a NodeMap for the Nodes created' {
                     $Global:PSRemotely.NodeMap.count | Should Be 2
-                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq 'localhost'}) | Should Be $True
-                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq "$env:ComputerName"}) | Should Be $True
+                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq 'localhost'}) | Should NOT BeNullOrEmpty
+                    $Global:PSRemotely.NodeMap.Where({$_.NodeName -eq "$env:ComputerName"}) | Should NOT BeNullOrEmpty
                 }
 
                 It 'Should have the PathStatus true for the NodeMap (implies the PSRemotelyNodePath exists)' {
@@ -242,7 +242,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
             Context 'Should update the global variable PSRemotely' {
 
                 It 'Should clear out Session Hashtable' {
-                    $Global:PSRemotely.SessionHashTable | Should  BeNullOrEmpty
+                    $Global:PSRemotely.SessionHashTable.Count | Should  Be 0
                 }
             }
         }

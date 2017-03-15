@@ -206,7 +206,7 @@ try {
 		Context 'Should update the global variable PSRemotely' {
 
 			It 'Should clear out Session Hashtable' {
-				$Global:PSRemotely.SessionHashTable | Should  BeNullOrEmpty
+				$Global:PSRemotely.SessionHashTable.Count | Should  Be 0
 			}
 		}
 	}

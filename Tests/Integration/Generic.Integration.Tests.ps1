@@ -25,6 +25,9 @@ Describe "PSRemotely only accepts *.PSRemotely.ps1 extension files" {
 
     It 'Should throw an error' {
         $PSRemotelyError | Should Not BeNullOrEmpty
-        $PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.' | Should be $True 
+    }
+
+    It 'Should throw a custom error message' {
+        ($PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.') | Should NOT BeNullOrEmpty 
     }
 }

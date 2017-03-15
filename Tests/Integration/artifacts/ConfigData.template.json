@@ -12,7 +12,7 @@
         {
             "NodeName" : "localhost",
             "ServiceName" : "bits",
-            "Type" : "Compute"
+            "Type" : "Storage"
         }
     ]
 }
