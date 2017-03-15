@@ -49,7 +49,7 @@ So you take the investments in your tests and let PS Remotely do the underlying 
 Once you have the tests file reeady, below is how you invoke the PS Remotely framework : 
 
 ```powershell
-Invoke-Remotely -Script <Path_to_Tests.ps1>
+Invoke-Remotely -Script <Path_to_PSRemotely.ps1>
 ```
 
 Output of the above is a JSON object for the Node on which the tests were run. The property Status is true if all the tests (Describe blocks) passed on the remote node.

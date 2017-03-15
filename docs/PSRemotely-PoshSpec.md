@@ -38,6 +38,7 @@ Save-Module -name PoshSpec -RequiredVersion 2.1.12 -Path .\PSRemotely\Lib -Verbo
 ```
 
 The above will create the folder structure like below, under the lib folder (which PSRemotely works with)
+
 + PSRemotely
     + lib
         + PoshSpec
@@ -60,5 +61,5 @@ PSRemotely -Verbose {
 }
 
 ```
-Note - Using PoshSpec tests and targeting localhost (remote nodes work) using PSRemotely does not work, haven't got around
+Note - Using PoshSpec style tests to target operations validation against the localhost fails (remote nodes do work), haven't got around
 to check why that is the case but that is something uncovered while writing this doc.

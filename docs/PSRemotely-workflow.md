@@ -2,9 +2,10 @@
 
 PSRemotely is a very simple module. Below is how it works.
 It works in three stages :
- - BootStrap
- - CopyTests
- - InvokeTests
+
+ 1. BootStrap
+ 2. CopyTests
+ 3. InvokeTests
 
 If you have a test file say  Server1.PSRemotely.ps1, see below :
 
@@ -31,7 +32,7 @@ Remotely {
 ## BootStrap Stage 
 
 PSRemotely starts by looking at the names of the servers supplied to it with the *Node* keyword or it looks at the DSC style configuration data.
-In the background it does a bunch of stuff referred to as 'bootstrapping'. During the bootstrapping phase for a node below happens: 
+In the background it does a bunch of stuff referred to as 'bootstrapping'. During the bootstrapping phase for a node, below happens in the background: 
 
 1. Create a PSSession to the remote nodes (supplying credentials is supported). 
 It will also store the Node's PSSession, Credential information in a hashtable.

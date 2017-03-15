@@ -16,12 +16,12 @@
     Get-Command -Module PSRemotely
 
 # Get help for the module and a command
-    Get-Help Invoke-PSRemotely -full       # *.tests.ps1 based operation validation
+    Get-Help Invoke-PSRemotely -full       # *.PSRemotely.ps1 based operation validation
 ```
 
 ### PSRemotely Example
 
-All you need is a *.Tests.ps1 file that tell PSRemotely about your remote operation validation. Here's a quick example.
+All you need is a *.PSRemotely.ps1 file that tell PSRemotely about your remote operation validation. Here's a quick example.
 
 
 Here's my sample.PSRemotely.ps1 file

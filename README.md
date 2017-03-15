@@ -8,7 +8,7 @@ In a nutshell it let's you execute Pester tests against a remote machine. PSRemo
 
 Note - In the code & documentation the term 'Remotely' and 'PSRemotely' refer to the same.
 
-It supports copying of the modules and artefacts to the remote node before the Pester tests are run. 
+It supports copying of the modules and artifacts to the remote node before the Pester tests are run. 
 
 Description
 ======================
@@ -47,7 +47,7 @@ Describe 'Bits Service test' {
     }
 }
 ```
-If you want to target the very same tests on the remote node named say Node1,Node2 & Node3 from your current workstation, you can use PSRemotely.
+If you want to target the very same tests on the remote node named say AD,WDS & DHCP from your current workstation (part of the same domain), you can use PSRemotely.
 
 
 Usage with PSRemotely:
@@ -55,7 +55,7 @@ Usage with PSRemotely:
 ```powershell
 PSRemotely {
 	
-    Node AD {
+    Node AD, WDS, DHCP {
 		
         Describe 'Bits Service test' {
 		
@@ -84,7 +84,33 @@ otherwise the Error record thrown by Pester is returned :
 ```json
 {
     "Status":  true,
+    "NodeName":  "WDS",
+    "Tests":  [
+                  {
+                      "TestResult":  [
+
+                                     ],
+                      "Result":  true,
+                      "Name":  "Bits Service test"
+                  }
+              ]
+}
+{
+    "Status":  true,
     "NodeName":  "AD",
+    "Tests":  [
+                  {
+                      "TestResult":  [
+
+                                     ],
+                      "Result":  true,
+                      "Name":  "Bits Service test"
+                  }
+              ]
+}
+{
+    "Status":  true,
+    "NodeName":  "DHCP",
     "Tests":  [
                   {
                       "TestResult":  [

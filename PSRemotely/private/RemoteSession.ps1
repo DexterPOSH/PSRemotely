@@ -126,7 +126,7 @@ function CreateSessions
 					    else {
 						    #$sessionInfo = CreateSessionInfo -Session (New-PSSession -ComputerName $Node.NodeName -Name $sessionName -SessionOption $PSSessionOption)
 					    }
-						$PSSessionOption = New-PSSessionOption -ApplicationArguments $argumentList  -NoMachineProfile
+						$PSSessionOption = New-PSSessionOption -NoMachineProfile # remove passing argument list here, can not pass complex data types
 						[ValidateNotNullOrEmpty()]$session = New-PSSession @PSSessionParams -SessionOption $PSSessionOption
 						[ValidateNotNullOrEmpty()]$sessionInfo = CreateSessionInfo -Session $session -Credential $credential
                     }
