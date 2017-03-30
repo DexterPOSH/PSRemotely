@@ -51,6 +51,8 @@ function PSRemotely
 
 		[Parameter(Position = 2,
 					ParameterSetName='ConfigurationData')]
+		[Parameter(Position = 2,
+					ParameterSetName='ConfigDataFromFile')]
 		[System.String]$PreferNodeProperty,
 		
 		[Parameter(Position=1, ParameterSetName='ConfigDataFromFile')]
@@ -113,7 +115,7 @@ function PSRemotely
 				if ($AllNodes.NodeName) {
 					Write-VerboseLog -Message 'Creating sessions'
 					$Null = $PSBoundParameters.Remove('Body')
-					CreateSessions  -ConfigurationData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+					CreateSessions  -ConfigurationData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList -PreferNodeProperty $PreferNodeProperty
 
 					if( $PSRemotely.sessionHashTable.Values.count -le 0) {
 						Write-VerboseLog -Message 'Error - No PSSessions opened'
