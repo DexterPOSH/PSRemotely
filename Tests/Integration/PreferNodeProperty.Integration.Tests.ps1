@@ -30,7 +30,7 @@ Start-Sleep -Seconds 4
 
 try {
 
-	Describe "PSRemotely CredentialHash usage, with PS V$($PSVersion)" -Tag Integration {
+	Describe "PSRemotely PreferNodeProperty usage, with PS V$($PSVersion)" -Tag Integration {
  		
 		# Act, Invoke PSRemotely
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
@@ -58,6 +58,25 @@ try {
                 #$SessionHash.Credential | Should NOT BeNullOrEmpty
                 $SessionHash.Session.ComputerName | Should Be '127.0.0.1'
             }
+
+			It 'Should have the valid Session name' {
+				$SessionHas.Session.Name | SHould be 'PSRemotely-localhost'
+			}
+		}
+
+
+		Context 'Validate the Remote ops validation tests run on the node passed' {
+			# Since the tests targeted were validating the $Node variable 
+			# Assert that the tests passed
+			$JsonObject = $Result | ConvertFrom-JSON 
+
+			It "Should have passed all the tests for the Node" {
+				$JsonObject.Status | Should Be $True
+			}
+
+			It "Should have targeted the correct Node" {
+				$JsonObject.NodeName | Should Be 'Localhost'
+			}
 		}
 
 	}
