@@ -39,7 +39,7 @@ try {
 
 		# Test if the PSSession was opened to the node using the supplied credential
 		Context 'Validate that PSSession was created for the PSRemotely node using supplied CredentialHash' {
-			$SessionHash = $Global:PSRemotely.SessionHashtable["localhost"]
+			$SessionHash = $Global:PSRemotely.SessionHashtable["::1"]
 
 			It 'Should have opened a PSSession to the Node' {
 				$SessionHash.Session | Should NOT BeNullOrEmpty	
@@ -60,7 +60,7 @@ try {
             }
 
 			It 'Should have the valid Session name' {
-				$SessionHas.Session.Name | SHould be 'PSRemotely-::1'
+				$SessionHash.Session.Name | SHould be 'PSRemotely-::1'
 			}
 		}
 
@@ -75,7 +75,7 @@ try {
 			}
 
 			It "Should have targeted the correct Node" {
-				$JsonObject.NodeName | Should Be 'Localhost'
+				$JsonObject.NodeName | Should Be '::1'
 			}
 		}
 
