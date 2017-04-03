@@ -9,7 +9,10 @@ function PSRemotely
 
 	.PARAMETER ConfigurationData
 	Provide DSC style ConfigurationData for environment details to PSRemotely.
-	
+
+	.PARAMETER PreferNodeProperty
+	Specify the name of the property defined in the Node's cofiguration data that is to be used to open PSRemoting session.
+		
 	.PARAMETER Path
 	The ConfigurationData can be supplied via a .psd1 or .json file.
 	PSRemotely will be able to work with all these configuration data sources, until it follows the DSC syntax for it.
@@ -45,6 +48,12 @@ function PSRemotely
 		[Parameter(Position = 1,
 					ParameterSetName='ConfigurationData')]
         [hashtable] $configurationData,
+
+		[Parameter(Position = 2,
+					ParameterSetName='ConfigurationData')]
+		[Parameter(Position = 2,
+					ParameterSetName='ConfigDataFromFile')]
+		[System.String]$PreferNodeProperty,
 		
 		[Parameter(Position=1, ParameterSetName='ConfigDataFromFile')]
 		[ValidateScript({ '.json','.psd1'  -contains $([System.IO.Path]::GetExtension($_))})] 
@@ -84,6 +93,7 @@ function PSRemotely
 				'ConfigDataFromFile' {
 					Write-VerboseLog -Message 'ParameterSet - ConfigDataFromFile'
 					$ConfigurationData = LoadConfigDataFromFile -Path $Path
+					$Null = $PSBoundParameters.Remove('Path') # remove the path from the PSBound params, later used to create sessions
 					break
 				}
 			}
@@ -104,7 +114,8 @@ function PSRemotely
 				
 				if ($AllNodes.NodeName) {
 					Write-VerboseLog -Message 'Creating sessions'
-					CreateSessions -ConfigData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList
+					$Null = $PSBoundParameters.Remove('Body')
+					CreateSessions  -ConfigurationData $configurationData -CredentialHash $CredentialHash  -ArgumentList $ArgumentList -PreferNodeProperty $PreferNodeProperty
 
 					if( $PSRemotely.sessionHashTable.Values.count -le 0) {
 						Write-VerboseLog -Message 'Error - No PSSessions opened'

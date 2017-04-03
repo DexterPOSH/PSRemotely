@@ -126,6 +126,9 @@ Function Invoke-PSRemotely {
                 # construct the object from the input
                 $Object = ConvertFrom-Json -InputObject $JSONInput
                 
+                If (-not $Object.NodeName ) {
+                    Throw "JSON Input must specify the NodeName property."
+                }
                 # Check if the node is already bootstrapped and session info maintained in the PSRemotely variable
                 if (TestRemotelyNodeBootStrapped -ComputerName $Object.NodeName) {
                     # Node is bootstrapped, get the corresponding session object
@@ -206,7 +209,7 @@ Function Invoke-PSRemotely {
     END {
         if ($PSCmdlet.ParameterSetName -eq 'JSON') {
             $null = $testjob | Wait-Job
-            $results = @(ProcessRemotelyJob -InputObject $TestJob)
+            $results = @(ProcessRemotelyJob -InputObject $([System.Collections.DictionaryEntry]::New($Object.NodeName,$TestJob)))
             $testjob | Remove-Job -Force
             ProcessRemotelyOutputToJSON -InputObject $results
         }

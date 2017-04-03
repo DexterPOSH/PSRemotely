@@ -252,6 +252,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
         #Clear-RemoteSession
         Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
 	    Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+        Get-PSSession | Remove-PSSession
     }
 
 }

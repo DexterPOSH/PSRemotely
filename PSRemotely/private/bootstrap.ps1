@@ -264,6 +264,8 @@ Function CopyTestsFileToRemotelyNode {
                 [String]$testBlock
             )
             # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
+            # TODO - instead of the computername , the nodename defined in the environment config data should flow down here.
+            # This would be used when using reportunit for the report creation.
             $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
             $testFile = "$($PSRemotely.PSRemotelyNodePath)\$testFileName"
             if ($Node) { 

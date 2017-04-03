@@ -56,7 +56,11 @@ function CreateSessions
 		[hashtable]$ArgumentList,
 
 		[Parameter(ParameterSetName='ConfigurationData')]
-		[HashTable]$ConfigData
+		[HashTable]$ConfigurationData,
+
+		[Parameter(ValueFromPipelineByPropertyName, ParameterSetName = 'ConfigurationData')]
+		[System.String]
+		$PreferNodeProperty
     )
 
 	# try to see if there are already open PSSessions, which are available
@@ -91,7 +95,7 @@ function CreateSessions
 		'ConfigurationData' {
 			# since this is Configuration data parameter set, which means it was supplied.
 			# Call Clear-RemoteSession
-			foreach ($node in $ConfigData.AllNodes) {
+			foreach ($node in $ConfigurationData.AllNodes) {
 				$argumentList = $Script:argumentList.clone()
 				$argumentList.Add('Node',$node) # Add this as an argument list, so that it is availabe as $Node in remote session
 				
@@ -104,10 +108,18 @@ function CreateSessions
 						$sessionInfo = CreateSessionInfo -Session $existingPSSession
 					}
                     else {
-						$PSSessionParams = @{
-							ComputerName = $Node.NodeName
-							Name = $("PSRemotely-{0}" -f $Node.NodeName)
-						}
+							if (($PSBoundParameters.ContainsKey('PreferNodeProperty')) -and
+								(-not [System.String]::IsNullOrEmpty($node[$PreferNodeProperty]))) {
+								$nodeName = $node[$PreferNodeProperty];
+							}
+							else {
+								$nodeName = $Node.NodeName
+							}
+
+							$PSSessionParams = @{
+								ComputerName = $NodeName
+								Name = $("PSRemotely-{0}" -f $Node.NodeName)
+							}
 
 					    if ($node.Credential) {
 						    # if the node has a key called credential set then use it to create the pssession, First priroity

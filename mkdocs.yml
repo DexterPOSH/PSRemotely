@@ -14,6 +14,9 @@ pages:
     - Using Credential Hashtable: Example-CredentialHash.md
     - Using Configuration Data and Credential : Example-ConfigurationData-Credential.md
     - Using custom Variables : Example-Custom-Variables.md
+    - Using IPv4 Address for node name : Example-Ipv4-Address.md
+    - Using IPv6 Address for node name : Example-Ipv6-Address.md
+    - Using PreferNodeProperty parameter : Example-PreferNodeProperty.md
   - How Do I...:
     - Invoke PSRemotely: Invoke-PSRemotely.md
     - TroubleShoot : PSRemotely.TroubleShoot.md

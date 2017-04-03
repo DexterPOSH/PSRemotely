@@ -2,10 +2,12 @@ Function ProcessRemotelyJob {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [Object]$InputObject  
+        [System.Collections.DictionaryEntry]$InputObject  
     )
+    $NodeName = $InputObject.Key
+    $Job = $InputObject.Value
     
-    foreach($childJob in $InputObject.ChildJobs)
+    foreach($childJob in $Job.ChildJobs)
 		{
 			if($childJob.Output.Count -eq 0){
 				[object] $outputStream = New-Object psobject
@@ -34,7 +36,7 @@ Function ProcessRemotelyJob {
 			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetDebugOutput -Value { return $this.__Streams.DebugOutput }
 			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetProgressOutput -Value { return $this.__Streams.ProgressOutput }
 			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetWarning -Value { return $this.__Streams.Warning }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name RemotelyTarget -Value $childJob.Location
+			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name RemotelyTarget -Value $NodeName
 
 			if($childJob.State -eq 'Failed'){
 				$childJob | Receive-Job -ErrorAction SilentlyContinue -ErrorVariable jobError
@@ -54,7 +56,7 @@ Function ProcessRemotelyOutputToJSON {
         # Specify this switch to get the raw pester output back for the nodes.
         [Switch]$Raw  
     )
-    $NodeName = $InputObject.PSComputerName | Select-Object -Unique
+    $NodeName = $InputObject.RemotelyTarget | Select-Object -Unique
     $NodeName = $NodeName -replace '\[',''
     $NodeName = $NodeName -replace '\]',''
     $output = @{
@@ -68,7 +70,7 @@ Function ProcessRemotelyOutputToJSON {
         #Status = if ($result.FailedCount) {$False} else {$True};
     }
 
-    $output.Add('Status',$(@($output.Tests.GetEnumerator() | Foreach {$PSItem.Result}) -notcontains $false ))
+    $output.Add('Status',$(@($output.Tests.GetEnumerator() | Foreach-Object -Process {$PSItem.Result}) -notcontains $false ))
     $output | ConvertTo-Json -depth 100
 
     
@@ -140,40 +142,39 @@ Function Start-RemotelyJobProcessing {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [Object[]]$inputObject
+        [Hashtable]$inputObject
     )
     TRY {
-        $allJobsCompletedHash = @{}
+        $AllJobsCompletedHash = @{}
 
-        $inputObject | Foreach-Object -Process {
-            $allJobsCompletedHash.Add($PSItem, $false)
+        $inputObject.Keys | Foreach-Object -Process {
+            $AllJobsCompletedHash.Add($PSItem, $False)
         }
 
-        $cloneJobHash = $allJobsCompletedHash.Clone()
+        $CloneJobHash = $AllJobsCompletedHash.Clone() # used to iterate over the Hashtable
 
         do {
-
-            foreach ($enum in $cloneJobHash.GetEnumerator()) {
-
-                if ($allJobsCompletedHash[$enum.key]) {
-                    # means job was processed
-                    Write-VerboseLog -Message "PSRemotely job already processed for Node -> $(($enum.key).Location )"
+            foreach ($nodeJobStatus in $CloneJobHash.GetEnumerator()) {
+                if ($nodeJobStatus.Value) {
+                    # node job status is True, it has been processed
+                    Write-VerboseLog -Message "PSRemotely job already processed for Node -> $($nodeJobStatus.key) "
                 }
                 else {
-                    # see if the job finished
-                    if ($enum.Key | Where -Property State -In @('Completed','Failed')) {
-                        Write-VerboseLog -Message "PSRemotely job completed/failed for Node -> $(($enum.key).Location ) . Processing it now."
-                        $enum.Key | ProcessRemotelyJob | ProcessRemotelyOutputToJSOn
-                        $allJobsCompletedHash[$enum.key] = $true # set the job processed status to True
-                    }
-                }   
-            }
-        
-            # induce delay of 2 seconds
-            Write-VerboseLog -Message 'PSRemotely jobs still running, sleep for 5 seconds'
-            Start-Sleep -Seconds 5
+                    # node job status is False, it has not been processed
+                    # Process the job now
+                    $enum = $inputObject.GetEnumerator() | 
+                            Where-Object -FilterScript {$PSItem.Key -eq $nodeJobStatus.Key}
 
-        } until (@($allJobsCompletedHash.Values) -notcontains $False)
+                    if ($enum.Value | Where-Object -Property State -In @('Completed', 'Failed')) {
+                        Write-VerboseLog -Message "PSRemotely job finished for Node -> $($nodeJobStatus.key). Processing it now."
+                        $enum | ProcessRemotelyJob | ProcessRemotelyOutputToJSON
+                        $AllJobsCompletedHash[$enum.key] = $true
+                    }
+                    
+                }
+            }
+
+        }  until (@($allJobsCompletedHash.Values) -notcontains $False)
     }
     CATCH {
         Write-VerboseLog -ErrorInfo $PSitem

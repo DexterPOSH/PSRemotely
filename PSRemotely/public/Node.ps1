@@ -77,7 +77,7 @@ Function Node {
 					}
 				}
 			}
-			$testjob = @()
+			$testjobHash = @{}
 		} # end Try
 		CATCH {
 			Write-VerboseLog -ErrorInfo $PSitem
@@ -90,7 +90,7 @@ Function Node {
 			TRY {
 				Write-VerboseLog -Message "Setting up Node -> $nodeName for tests execution"
 				# get the relevant Session for the node
-				$session = $Sessions | Where-Object -FilterScript {$PSitem.ComputerName -like "*$nodeName*"} # Note -like "*$nodeName*" added because configdata may use IPv6 address
+				$session = $Sessions | Where-Object -FilterScript {$PSitem.Name -like "*$nodeName*"} # Note -like "*$nodeName*" added because configdata may use IPv6 address
 				# If Ipv6Address is used to connect to the PSRemotely node then the [,] braces are added to the computername property to the session object
 
 				if ($session) {
@@ -119,7 +119,7 @@ Function Node {
 					
 					# invoke the Pester tests
 					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."
-					$testjob += Invoke-Command -Session $session -ScriptBlock {
+					$job = Invoke-Command -Session $session -ScriptBlock {
 						param(
 							[hashtable]$PSRemotely,
 							[string[]]$tag
@@ -151,6 +151,9 @@ Function Node {
 								Invoke-Pester -Script "$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1" @invokePesterParams
 							}
 					} -ArgumentList $PSRemotely, $Tag -AsJob 
+
+					# Add the nodename and Job object to the hash, used further for the processing the output
+					$testjobHash.Add($nodeName, $job)
 				}
 				else {
 					Write-Warning -Message "PSSession for $nodeName NOT found."
@@ -172,7 +175,7 @@ Function Node {
 
 		# Process background jobs as they are finished, rather than waiting for all of them to finish
 		Write-VerboseLog -Message "Start background processing of the PSRemotely jobs."
-		Start-RemotelyJobProcessing -InputObject $testJob
+		Start-RemotelyJobProcessing -InputObject $testJobHash
     }
 
 }
