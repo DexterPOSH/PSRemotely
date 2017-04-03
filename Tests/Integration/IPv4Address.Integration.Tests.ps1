@@ -30,7 +30,7 @@ Start-Sleep -Seconds 4
 
 try {
 
-	Describe "PSRemotely PreferNodeProperty usage, with PS V$($PSVersion)" -Tag Integration {
+	Describe "PSRemotely IPv4Address usage, with PS V$($PSVersion)" -Tag Integration {
  		
 		# Act, Invoke PSRemotely
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
@@ -89,5 +89,6 @@ finally {
 	Enable-LocalAccountTokenFilterPolicy
 	Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
     Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+	Get-PSSession | Remove-PSSession
 
 }

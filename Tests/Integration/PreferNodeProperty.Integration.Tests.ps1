@@ -60,7 +60,7 @@ try {
             }
 
 			It 'Should have the valid Session name' {
-				$SessionHas.Session.Name | SHould be 'PSRemotely-localhost'
+				$SessionHash.Session.Name | SHould be 'PSRemotely-localhost'
 			}
 		}
 
@@ -89,5 +89,6 @@ finally {
 	Enable-LocalAccountTokenFilterPolicy
 	Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
     Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
+	Get-PSSession | Remove-PSSession
 
 }

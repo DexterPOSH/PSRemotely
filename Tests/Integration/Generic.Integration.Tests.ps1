@@ -19,15 +19,22 @@ Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
-Describe "PSRemotely only accepts *.PSRemotely.ps1 extension files" {
+try {
+    Describe "PSRemotely only accepts *.PSRemotely.ps1 extension files" {
 
-    $null = Invoke-PSRemotely -Script $RemotelyTestFile -ErrorVariable PSRemotelyError 2>&1
+        $null = Invoke-PSRemotely -Script $RemotelyTestFile -ErrorVariable PSRemotelyError 2>&1
 
-    It 'Should throw an error' {
-        $PSRemotelyError | Should Not BeNullOrEmpty
+        It 'Should throw an error' {
+            $PSRemotelyError | Should Not BeNullOrEmpty
+        }
+
+        It 'Should throw a custom error message' {
+            ($PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.') | Should NOT BeNullOrEmpty 
+        }
     }
 
-    It 'Should throw a custom error message' {
-        ($PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.') | Should NOT BeNullOrEmpty 
-    }
+}
+catch {
+    Clear-PSRemotelyNodePath
+    Clear-RemoteSession
 }

@@ -17,7 +17,7 @@ $configdata = @{
 }
 
 
-PSRemotely -ConfigurationData $ConfigData -PreferNodeProperty  IPAddress -Verbose {
+PSRemotely -ConfigurationData $ConfigData -PreferNodeProperty  IPAddress {
 
     Node $AllNodes.NodeName {
 
