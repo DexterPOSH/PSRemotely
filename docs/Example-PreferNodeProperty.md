@@ -1,4 +1,4 @@
-# PSRemotely example using PreferNodeProperty to use IPV4/IPv6 address as part of the Node configudation data
+# PSRemotely example using PreferNodeProperty to use IPV4/IPv6 address as part of the Node configuration data
 
 Though PSRemotely supports using IPv4/IPv6 address as the nodenames for targeting remote nodes for operations validaiton.
 There is a downside to it, the output JSON object will contain the nodename as the cryptic IPv4/IPv6 address.
