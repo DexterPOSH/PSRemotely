@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](https://readthedocs.org/projects/psremotely/badge/?version=latest)](https://readthedocs.org/projects/psremotely/badge/?version=latest)
+[![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](https://readthedocs.org/projects/psremotely/badge/?version=latest)](http://psremotely.readthedocs.io/en/latest/)
 
 PSRemotely
 ============
