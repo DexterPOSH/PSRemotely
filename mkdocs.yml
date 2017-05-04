@@ -18,6 +18,7 @@ pages:
     - Using IPv6 Address for node name : Example-Ipv6-Address.md
     - Using PreferNodeProperty parameter : Example-PreferNodeProperty.md
   - How Do I...:
+    - Target different types of Nodes in a solution: PSRemotely-Node-Based-Target.md
     - Invoke PSRemotely: Invoke-PSRemotely.md
     - TroubleShoot : PSRemotely.TroubleShoot.md
     - Copy Artifacts to PSRemotely Nodes: PSRemotely.Artifacts.md
