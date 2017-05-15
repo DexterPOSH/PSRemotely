@@ -104,7 +104,7 @@ Function Node {
 					$testNameandTestBlockArray | Foreach-Object -Process {
 						# Copy each tests file to the remote node.
 						Write-VerboseLog -Message "Copying test named $($PSitem.Keys -join ' ') on Node -> $nodeName"
-						CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
+						CopyTestsFileToRemotelyNode -Session $session -NodeName $nodeName -TestName $PSItem.Keys -TestBlock $PSItem.Values
 					}
 
 					# copy/overwrite the Artifacts on the PSRemotely nodes
@@ -131,13 +131,20 @@ Function Node {
 							Import-Module "$($PSRemotely.PSRemotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 							Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from PSRemotely lib folder"
 						}
-						#$nodeOutputFile = "{0}\{1}.xml" -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName
+						if ($Node.NodeName) {
+							# if the configuration data was supplied then result should use the nodename from there.
+							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $($Node.NodeName);
+						}
+						else {
+							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName;
+						}
 						$invokePesterParams = @{
 							PassThru = $True;
 							Quiet = $True;
 							OutputFormat = 'NunitXML';
-							OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName;
+							OutputFile = $OutputFile
 						}
+
 						# invoke pester now to run all the tests
 						if ($Tag) {
 							# Add the tag

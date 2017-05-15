@@ -245,28 +245,36 @@ Function CopyTestsFileToRemotelyNode {
         [Parameter(Mandatory)]
         [System.Management.Automation.Runspaces.PSSession]$session,
 
-
         [Parameter(Mandatory)]
         [String]$TestName,
 
         [Parameter(Mandatory)]
-        [String]$TestBlock
+        [String]$TestBlock,
+        
+        [Parameter(Mandatory=$False)]
+        [String]$NodeName
     )
 
     
     $copyTestsFileParams = @{
         'Session' = $session;
-        'ArgumentList' = @($PSRemotely, $testName, $testBlock)
+        'ArgumentList' = @($PSRemotely, $testName, $testBlock, $NodeName)
         'Scriptblock' = {
             param(
                 [HashTable]$PSRemotely,
                 [String]$testName,
-                [String]$testBlock
+                [String]$testBlock,
+                [String]$NodeName
             )
             # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
             # TODO - instead of the computername , the nodename defined in the environment config data should flow down here.
             # This would be used when using reportunit for the report creation.
-            $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            if ($NodeName) {
+                $testFileName = "{0}.{1}.Tests.ps1" -f $NodeName, $testName.replace(' ','_')
+            }
+            else {
+                $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            }
             $testFile = "$($PSRemotely.PSRemotelyNodePath)\$testFileName"
             if ($Node) { 
                 # Check if the $Node var was populated in the remote session, then add param node to the test block
