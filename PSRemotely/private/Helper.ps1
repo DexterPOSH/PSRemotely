@@ -129,7 +129,10 @@ Function Write-VerboseLog
             $Message = $ErrorInfo.Exception.Message
             $Functionname = $ErrorInfo.InvocationInfo.InvocationName
             $LineNo = $ErrorInfo.InvocationInfo.ScriptLineNumber
-            $scriptname = $(Split-Path -Path $ErrorInfo.InvocationInfo.ScriptName -Leaf)
+            if ($ErrorInfo.InvocationInfo.ScriptName) {
+                # this is done to correctly recieve the original error back from Pester mocks
+                $scriptname = $(Split-Path -Path $ErrorInfo.InvocationInfo.ScriptName -Leaf)
+            }
             Write-Verbose -Message "$scriptname - $Functionname - LineNo : $LineNo - $Message"           
             #$PSCmdlet.ThrowTerminatingError($ErrorInfo)
             #Write-Error -ErrorRecord $ErrorInfo -ErrorAction Stop # throw back the Error record 
@@ -166,13 +169,11 @@ Function Start-RemotelyJobProcessing {
 
                     if ($enum.Value | Where-Object -Property State -In @('Completed', 'Failed')) {
                         Write-VerboseLog -Message "PSRemotely job finished for Node -> $($nodeJobStatus.key). Processing it now."
-                        $enum | ProcessRemotelyJob | ProcessRemotelyOutputToJSON
+                        $enum | ProcessRemotelyJob -ErrorAction Stop | ProcessRemotelyOutputToJSON -ErrorAction Stop
                         $AllJobsCompletedHash[$enum.key] = $true
                     }
-                    
                 }
             }
-
         }  until (@($allJobsCompletedHash.Values) -notcontains $False)
     }
     CATCH {
