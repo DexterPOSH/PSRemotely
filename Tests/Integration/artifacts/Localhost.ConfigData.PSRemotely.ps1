@@ -29,7 +29,7 @@ $ConfigData = @{
 # PSRemotely tests
 PSRemotely -ConfigurationData $ConfigData {
 	Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
-		Describe 'Bits Service test' {
+		Describe 'Service test' {
 			
 			$Service = Get-Service -Name $node.ServiceName # See the use of $node variable here
 			

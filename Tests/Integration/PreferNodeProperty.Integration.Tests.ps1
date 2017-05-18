@@ -39,7 +39,7 @@ try {
 
 		# Test if the PSSession was opened to the node using the supplied credential
 		Context 'Validate that PSSession was created for the PSRemotely node using supplied CredentialHash' {
-			$SessionHash = $Global:PSRemotely.SessionHashtable["localhost"]
+			$SessionHash = $Global:PSRemotely.SessionHashtable["Node1"]
 
 			It 'Should have opened a PSSession to the Node' {
 				$SessionHash.Session | Should NOT BeNullOrEmpty	
@@ -60,7 +60,7 @@ try {
             }
 
 			It 'Should have the valid Session name' {
-				$SessionHash.Session.Name | SHould be 'PSRemotely-localhost'
+				$SessionHash.Session.Name | SHould be 'PSRemotely-Node1'
 			}
 		}
 
@@ -75,7 +75,18 @@ try {
 			}
 
 			It "Should have targeted the correct Node" {
-				$JsonObject.NodeName | Should Be 'Localhost'
+				$JsonObject.NodeName | Should Be 'Node1'
+			}
+		}
+
+		Context 'Validate the Nunit XML file format created on the remote node' {
+			$SessionHash = $Global:PSRemotely.SessionHashtable["Node1"]
+			$Session = $SessionHash.Session
+
+			It "Should have the Nunit report generated on the remote node using the NodeName" {
+				Invoke-Command -Session $Session -ScriptBlock {
+					Test-Path -Path "$($PSRemotely.PSRemotelyNodePath)\Node1.xml"
+				}
 			}
 		}
 
