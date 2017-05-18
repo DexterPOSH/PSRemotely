@@ -67,14 +67,14 @@ try {
 
             # First disconnect the session
             $OldSession = Enter-PSRemotely -NodeName localhost -PassThru
-            $OldFunctionInfo = Invoke-Command -Session $Session -ScriptBlock {
+            $OldFunctionInfo = Invoke-Command -Session $OldSession -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
             Disconnect-PSSession -Session $Session
 
             # Now invoke the Enter-PSRemotely again, it should create a new pssession to the node
             $NewSession = Enter-PSRemotely -NodeName localhost -PassThru
-            $NewFunctionInfo = Invoke-Command -Session $Session -ScriptBlock {
+            $NewFunctionInfo = Invoke-Command -Session $NewSession -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
 
