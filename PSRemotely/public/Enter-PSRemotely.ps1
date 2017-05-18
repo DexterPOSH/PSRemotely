@@ -1,6 +1,9 @@
 Function Enter-PSRemotely {
     [CmdletBinding()]
-    param ()
+    param (
+        # Specify this switch to get the PSSession object
+        [Switch]$PassThru
+    )
 
     DynamicParam {
         # Add a dynamic parameter 'NodeName' which discovers the PSRemotely nodes by looking at
@@ -101,8 +104,14 @@ Function Enter-PSRemotely {
                 $null = Set-Location -Path $PSRemotely.PSRemotelyNodePath -ErrorAction SilentlyContinue
             }
             
-            # Enter the PSSession interactively
-            Enter-PSSession -Session $Session
+            if ($PassThru.IsPresent) {
+                Write-Output -InputObject $Session
+            }
+            else {
+
+                # Enter the PSSession interactively
+                Enter-PSSession -Session $Session
+            }
         }
         
     }
