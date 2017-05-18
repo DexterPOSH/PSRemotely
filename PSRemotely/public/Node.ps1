@@ -139,6 +139,16 @@ Function Node {
 						else {
 							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $NodeName;
 						}
+						# Check that the filename does not contain invalid file characters e.g ::1 is the nodename in case of link local ipv6 address
+						# Credits : http://stackoverflow.com/questions/36408035/validating-file-name-input-in-powershell
+							
+						$IndexOfInvalidChar = $OutputFile.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+						# IndexOfAny() returns the value -1 to indicate no such character was found
+						if($IndexOfInvalidChar -ne -1){
+							# if there is an invalid character in the filename, fall back to using the computername
+							Write-Warning -Message "Invalid character found in the file name > $($OutputFile). Switching to using env:computername for filename"
+							$OutputFile = "{0}\{1}.xml" -f $($PSRemotely.PSRemotelyNodePath), $env:COMPUTERNAME
+						}
 						$invokePesterParams = @{
 							PassThru = $True;
 							Quiet = $True;

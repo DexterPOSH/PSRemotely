@@ -271,8 +271,19 @@ Function CopyTestsFileToRemotelyNode {
             # This would be used when using reportunit for the report creation.
             if ($NodeName) {
                 $testFileName = "{0}.{1}.Tests.ps1" -f $NodeName, $testName.replace(' ','_')
+                
             }
             else {
+                $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            }
+            # Check that the filename does not contain invalid file characters e.g ::1 is the nodename in case of link local ipv6 address
+            # Credits : http://stackoverflow.com/questions/36408035/validating-file-name-input-in-powershell
+                
+            $IndexOfInvalidChar = $testFileName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+            # IndexOfAny() returns the value -1 to indicate no such character was found
+            if($IndexOfInvalidChar -ne -1){
+                # if there is an invalid character in the filename, fall back to using the computername
+                Write-Warning -Message "Invalid character found in the file name > $($testFileName). Switching to using env:computername for filename"
                 $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
             }
             $testFile = "$($PSRemotely.PSRemotelyNodePath)\$testFileName"
