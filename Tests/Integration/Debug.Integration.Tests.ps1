@@ -70,7 +70,7 @@ try {
             $OldFunctionInfo = Invoke-Command -Session $OldSession -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
-            Disconnect-PSSession -Session $Session
+            Disconnect-PSSession -Session $OldSession
 
             # Now invoke the Enter-PSRemotely again, it should create a new pssession to the node
             $NewSession = Enter-PSRemotely -NodeName localhost -PassThru
@@ -86,13 +86,13 @@ try {
 
             It "Should NOT have `$Node variable defined in new PSSession" {
                 # Since a new PSSession is created it will not have $Node populated anymore
-                Invoke-Command -Session $Session -ScriptBlock {
+                Invoke-Command -Session $NewSession -ScriptBlock {
                     Test-Path -Path Variable:\Node
                 } | Should Be $False
             }
 
             It "Should populate the `$PSRemoltey variable after reconnecting to the Remote node" {
-                Invoke-Command -Session $Session -ScriptBlock {
+                Invoke-Command -Session $NewSession -ScriptBlock {
                     Test-Path -Path Variable:\PSRemotely
                 } | Should Be $True
             }
