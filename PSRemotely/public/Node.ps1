@@ -121,6 +121,7 @@ Function Node {
 					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."
 					$job = Invoke-Command -Session $session -ScriptBlock {
 						param(
+							[string]$NodeName,
 							[hashtable]$PSRemotely,
 							[string[]]$tag
 						)
@@ -136,7 +137,7 @@ Function Node {
 							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $($Node.NodeName);
 						}
 						else {
-							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName;
+							$OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $NodeName;
 						}
 						$invokePesterParams = @{
 							PassThru = $True;
@@ -157,7 +158,7 @@ Function Node {
 							else {
 								Invoke-Pester -Script "$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1" @invokePesterParams
 							}
-					} -ArgumentList $PSRemotely, $Tag -AsJob 
+					} -ArgumentList $NodeName,$PSRemotely, $Tag -AsJob 
 
 					# Add the nodename and Job object to the hash, used further for the processing the output
 					$testjobHash.Add($nodeName, $job)
