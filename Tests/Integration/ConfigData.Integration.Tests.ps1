@@ -126,7 +126,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
             Context '[BootStrap] Test if the Node tests were copied' {
 
                 It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Service_test.Tests.ps1" | 
                         Should Exist
                 }
 
@@ -146,7 +146,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                     
                     It 'Should return the result of each Describe block' {
                         $Object.Tests[0].Result | Should Be $True
-                        $Object.Tests[0].Name | Should Be 'Bits Service test'
+                        $Object.Tests[0].Name | Should Be 'Service test'
                     }
 
                     It 'Should have the TestResult empty' {
