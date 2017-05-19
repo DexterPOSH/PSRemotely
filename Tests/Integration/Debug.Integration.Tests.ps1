@@ -35,13 +35,13 @@ try {
         Context "Connecting to the remotely node's debug PSSession" {
 
             # fetch the session object and the function info
-            $Session = Enter-PSRemotely -NodeName localhost -PassThru
+            $Session = Enter-PSRemotely -NodeName Node1 -PassThru
             $FunctionInfo = Invoke-Command -Session $Session -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
             # Case where the underlying PSSession to the remotely node is open
-            It "Should have connected to the PSRemotely-localhost named PSSession" {
-                $Session.Name | Should Be 'PSRemotely-localhost'
+            It "Should have connected to the PSRemotely-Node1 named PSSession" {
+                $Session.Name | Should Be 'PSRemotely-Node1'
             }
 
             It "Should have the PSSession state as opened" {
@@ -66,14 +66,14 @@ try {
             # Gotcha is that the $node variable is lost when reconnecting
 
             # First disconnect the session
-            $OldSession = Enter-PSRemotely -NodeName localhost -PassThru
+            $OldSession = Enter-PSRemotely -NodeName Node1 -PassThru
             $OldFunctionInfo = Invoke-Command -Session $OldSession -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
             Disconnect-PSSession -Session $OldSession
 
             # Now invoke the Enter-PSRemotely again, it should create a new pssession to the node
-            $NewSession = Enter-PSRemotely -NodeName localhost -PassThru
+            $NewSession = Enter-PSRemotely -NodeName Node1 -PassThru
             $NewFunctionInfo = Invoke-Command -Session $NewSession -ScriptBlock {
                 Get-Command -Name Invoke-PSRemotely 
             }
