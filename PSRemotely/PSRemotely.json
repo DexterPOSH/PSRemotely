@@ -4,9 +4,6 @@
         {
             "Modulename": "Pester",
             "ModuleVersion": "3.3.14"
-        },
-        {
-            
         }
     ],
     "ArtifactsRequired":[
