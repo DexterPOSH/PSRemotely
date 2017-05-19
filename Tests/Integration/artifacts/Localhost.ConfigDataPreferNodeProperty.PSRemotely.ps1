@@ -8,7 +8,7 @@ $configdata = @{
         },
         @{ 
             # Individual node information hashtable
-            NodeName = 'localhost'
+            NodeName = 'Node1'
             IPAddress = '127.0.0.1'
             Credential = $(New-Object -TypeName PSCredential -ArgumentList 'PSRemotely', $(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
             TestAttribute = 'TestValue'

@@ -75,12 +75,12 @@ try {
 		Context '[BootStrap] Test if the Node tests were copied' {
 
 			It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.Bits_Service_test.Tests.ps1" | 
 					Should Exist
 			}
 
 			It 'Should create a Pester NUnit report for the Node' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).xml" |
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.xml" |
 					Should Exist
 			}	
 		}

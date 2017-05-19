@@ -79,6 +79,16 @@ try {
 			}
 		}
 
+		Context 'Validate the Nunit test result file generated' {
+
+			It "Should used ComputerName instead of NodeName for the Nunit XML file" {
+				# Should drop a Nunit XML file with the hostname.xml format
+				# the nodename is ::1 which is invalid file name, so validate it
+				"$($PSRemotely.PSRemotelyNodePath)\$($env:COMPUTERNAME).xml" |
+					Should Exist
+			}
+		}
+
 	}
 
 }
