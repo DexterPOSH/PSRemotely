@@ -37,7 +37,7 @@ InModuleScope -ModuleName $ENV:BHProjectName {
             # Act & Assert 
             It 'Should throw a customized error' {
                 { Get-TestNameAndTestBlock -Content $InputScript } |
-                    Should Throw 'TestName passed to Describe block should be a string'
+                    Should Throw 'Name or Fixture missing in the Describe block'
             }
         }
 
@@ -68,6 +68,68 @@ InModuleScope -ModuleName $ENV:BHProjectName {
             
             $InputScript = {
                 Describe 'dummy' -tag test   {
+                    It 'should work' {
+                        $true | Should be $true
+                    }
+                }
+            }
+
+            # Act & Assert 
+            $HashTable =  Get-TestNameAndTestBlock -Content $InputScript 
+            
+            $HashTable.GetEnumerator() | Foreach-Object {
+
+                It 'Should return the name of the test as they key in hashtable' {
+                     $PSitem.Key | Should Be 'dummy'
+                }
+
+                It 'Should return the test block as the value in the hashtable' {
+                    $PSitem.Value.Trim() | Should Be $InputScript.ToString().trim()
+                }
+            }
+        }
+
+        Context 'Describe block with test name and tags passed (named parameters)' {
+            
+            $InputScripts = @(
+                {
+                    Describe -Name 'dummy' -tag test   {
+                        It 'should work' {
+                            $true | Should be $true
+                        }
+                    }
+                },
+                {
+                    Describe -tag test -Name 'dummy'   {
+                        It 'should work' {
+                            $true | Should be $true
+                        }
+                    }
+                }
+            )
+
+            # Act & Assert 
+            foreach ($InputScript in $InputScripts) {
+                $HashTable =  Get-TestNameAndTestBlock -Content $InputScript 
+            
+                $HashTable.GetEnumerator() | Foreach-Object {
+
+                    It 'Should return the name of the test as they key in hashtable' {
+                        $PSitem.Key | Should Be 'dummy'
+                    }
+
+                    It 'Should return the test block as the value in the hashtable' {
+                        $PSitem.Value.Trim() | Should Be $InputScript.ToString().trim()
+                    }
+                }
+            }
+            
+        }
+
+        Context 'Describe block with test name and tags passed (position parameters)' {
+            
+            $InputScript = {
+                Describe -tag test 'dummy'  {
                     It 'should work' {
                         $true | Should be $true
                     }
