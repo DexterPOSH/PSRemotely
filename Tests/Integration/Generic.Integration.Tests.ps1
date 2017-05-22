@@ -47,7 +47,8 @@ try {
             (1..7).foreach({
                 It "Should have placed a localhost.Test$($PSItem).Tests.ps1 file in the PSRemotelyNodePath" {
                     $TestFileName = "localhost.Test{0}.Tests.ps1" -f $PSItem
-                    $Global:PSRemotely.PSRemotelyNodePath\$TestFileName | Should Exist
+                    $TestFilePath = "{0}\{1}" -f $Global:PSRemotely.PSRemotelyNodePath, $TestFileName
+                    $TestFilePath | Should Exist
                 }  
             })
         }
