@@ -38,10 +38,10 @@ try {
 
         Context "Ops validation tests using possible usage combinations with Describe keyword" {
             $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.name.tag.PSRemotely.ps1"
-            $null = Invoke-PSRemotely -Script $RemotelyTestFile -ErrorVariable PSRemotelyError 2>&1 
+             -ErrorVariable PSRemotelyError 2>&1 
 
             It 'Should NOT throw an error' {
-                $PSRemotelyError | Should BeNullOrEmpty
+                {Invoke-PSRemotely -Script $RemotelyTestFile} | Should NOT Throw
             }
             
             (1..7).foreach({
