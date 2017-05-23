@@ -6,8 +6,8 @@
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.IPv4Address.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |

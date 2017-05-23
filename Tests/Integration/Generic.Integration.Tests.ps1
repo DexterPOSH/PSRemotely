@@ -5,8 +5,8 @@ if(-not $ENV:BHProjectPath)
 
 $PSVersion = $PSVersionTable.PSVersion.Major
 
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |

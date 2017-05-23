@@ -10,8 +10,8 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
 Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
-$PrivateFunctions = Get-ChildItem "$ENV:BHPSModulePath\Private\" -Filter '*.ps1' -Recurse | Where-Object {$_.name -NotMatch "Tests.ps1"}
-$PublicFunctions = Get-ChildItem "$ENV:BHPSModulePath\Public\" -Filter '*.ps1' -Recurse | Where-Object {$_.name -NotMatch "Tests.ps1"}
+$PrivateFunctions = Get-ChildItem "$ENV:BHModulePath\Private\" -Filter '*.ps1' -Recurse | Where-Object {$_.name -NotMatch "Tests.ps1"}
+$PublicFunctions = Get-ChildItem "$ENV:BHModulePath\Public\" -Filter '*.ps1' -Recurse | Where-Object {$_.name -NotMatch "Tests.ps1"}
 
 #$PrivateFunctionsTests = Get-ChildItem "$ENV:BHProjectPath\Tests\" -Filter '*Tests.ps1' -Recurse 
 #$PublicFunctionsTests = Get-ChildItem "$ENV:BHProjectPath\Public\" -Filter '*Tests.ps1' -Recurse 

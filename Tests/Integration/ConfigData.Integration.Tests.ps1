@@ -8,8 +8,8 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 $RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigData.PSRemotely.ps1",
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromJSON.PSRemotely.ps1",
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromPSD1.PSRemotely.ps1")
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
 # Import the TestHelpers
