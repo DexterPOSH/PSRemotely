@@ -90,7 +90,8 @@ Function Enter-PSRemotely {
                     $ScriptBlock = {
                         param()
                         try {
-                            Invoke-Pester -Path $PSRemotely.PSRemotelyNodePath
+                            Invoke-Pester -Path "$($PSRemotely.PSRemotelyNodePath)\*.ps1" -ErrorAction Stop
+                            
                         }
                         catch {
                             Write-Warning -Message "[Warning] $($PSItem.Exception.Message)"
