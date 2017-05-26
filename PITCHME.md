@@ -62,7 +62,7 @@ Describe "TestIPConfiguration" {
 
 ### PoshSpec fits in
 
-PoshSpec added yet another layer of abstraction on our infrastructure tests.
+PoshSpec adds yet another layer of abstraction on our infrastructure tests.
 The tests look concise and easy to maintain.
 
 ```powershell
@@ -88,13 +88,12 @@ Describe "TestIPConfiguration" {
 
 ![alt](PSRemotely.png)
 
-PSRemotely was engineered with solution stack operations validation in mind.
-It let's you target remote node(s) for operations validation. Salient features :
-- Target Pester/PoshSpec based operations validation tests on the remote nodes.
-- Decouples node and solution configuration data using DSC config data syntax.
-- Self-contained framework, bootstraps remote node(s) for running the ops validation.
-- Allows re-running failed tests.
-- Easier debugging.
+PSRemotely was engineered with solution stack operations validation in mind. Few of its features:-
+- <span style="font-size:0.6em; color:gray">Target Pester/PoshSpec based operations validation tests on the remote nodes.</span>
+- <span style="font-size:0.6em; color:gray">Decouples node and solution configuration data using DSC config data syntax.</span>
+- <span style="font-size:0.6em; color:gray">Self-contained framework, bootstraps remote node(s) for running the ops validation.</span>
+- <span style="font-size:0.6em; color:gray">Allows re-running failed tests.</span>
+- <span style="font-size:0.6em; color:gray">Easier debugging.</span>
 ---
 
-## Validating a S2D cluster using PSRemotely
+## Demo Validating a S2D cluster using PSRemotely
