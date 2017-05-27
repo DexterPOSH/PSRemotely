@@ -1,13 +1,12 @@
 ## Operations Validation
 
-### Why Operations Validation?
 - <span style="font-size:0.9em; color:gray">Validating your Infrastructure as Code.</span>
 - <span style="font-size:0.9em; color:gray">Tests if the infrastructure components are functional.</span>
 
 +++
 
 <span style="font-size:1.0em; color:gray">Fits into the DevOps ecosystem.</span> |
-<span style="font-size:1.0em; color:gray"></span>
+<span style="font-size:1.0em; color:gray">Is my infrastructure functioning as expected?</span>
 
 ---
 ## PowerShell Scripts ?
@@ -84,10 +83,8 @@ Describe "TestIPConfiguration" {
 
 ---
 
-## Enter Remote operations validation
-
-![alt](PSRemotely.png)
-
+## Remote Ops validation
+Targeting tests written to remote node(s).
 PSRemotely was engineered with solution stack operations validation in mind. Few of its features:-
 - <span style="font-size:0.6em; color:gray">Target Pester/PoshSpec based operations validation tests on the remote nodes.</span>
 - <span style="font-size:0.6em; color:gray">Decouples node and solution configuration data using DSC config data syntax.</span>
@@ -97,3 +94,5 @@ PSRemotely was engineered with solution stack operations validation in mind. Few
 ---
 
 ## Demo Validating a S2D cluster using PSRemotely
+
+![alt](PSRemotely.png)
