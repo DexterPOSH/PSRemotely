@@ -207,3 +207,17 @@ Function Reset-PSRemotelyToUseDummyArtifact {
     $JsonObject.ArtifactsRequired = @('')
     $JsonObject | ConvertTo-Json | Set-Content -Path $Path  
 }
+
+Function Set-MaxMemoryPerShellMB {
+    [CmdletBinding()]
+    param($Value)
+
+    $CurrentValue = (Get-Item WSMan:\localhost\Shell\MaxMemoryPerShellMB).Value
+    if ($CurrentValue -lt $Value) {
+        Write-Verbose -Message "Configuring the Max memory to value [$Value]"
+        Set-Item -Path WSMan:\localhost\Shell\MaxMemoryPerShellMB -Value $Value -ErrorAction Stop
+    }
+    else {
+        Write-Verbose -Message "Current value [$CurrentValue] is greater than supplied value [$Value]"
+    }
+}

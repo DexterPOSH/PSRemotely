@@ -161,7 +161,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
 
                     It 'Sould return the result of each Describe block' {
                         $object.Tests[0].Result | Should Be $False
-                        $Object.Tests[0].Name | Should Be 'Bits Service test'
+                        $Object.Tests[0].Name | Should Be 'Service test'
                     }
 
                     It 'Should Write Error thrown to TestResult' {
@@ -169,7 +169,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                     }
 
                     It 'Should return more details about the test failed in the TestResult' {
-                        $Object.Tests[0].TestResult.Describe | Should Be 'Bits Service Test'
+                        $Object.Tests[0].TestResult.Describe | Should Be 'Service Test'
                         $Object.Tests[0].TestResult.Name | Should BeExactly 'Should be running'
                         $Object.Tests[0].TestResult.Result | Should Be 'Failed'
                         $Object.Tests[0].TestResult.ErrorRecord | Should NOT BeNullOrEmpty

@@ -26,6 +26,7 @@ New-User -Credential $UserCred
 Add-LocalUserToLocalAdminGroup -UserName PSRemotely
 Disable-LocalAccountTokenFilterPolicy # This is needed to establish PSSession using the local user, revert in the end
 Start-Sleep -Seconds 4
+Set-MaxMemoryPerShellMB -Value 1024
 
 try {
 
