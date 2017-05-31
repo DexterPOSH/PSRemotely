@@ -90,5 +90,5 @@ finally {
 	Reset-PSRemotelyToUseDummyArtifact -Path $RemotelyJSONFile
     Remove-DummyArtifact -Path "$ArtifactsPath\DeploymentManifest.xml"
 	Get-PSSession | Remove-PSSession
-
+	Restart-Service -Name WinRM -Force -Verbose
 }

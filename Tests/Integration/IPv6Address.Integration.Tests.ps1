@@ -22,7 +22,6 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 # Create a new User named PSRemotely for testing the PSSession
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
-$userCredHashtable = @{"$Env:COMPUTERNAME"=$UserCred}
 New-User -Credential $UserCred 
 Add-LocalUserToLocalAdminGroup -UserName PSRemotely
 Disable-LocalAccountTokenFilterPolicy # This is needed to establish PSSession using the local user, revert in the end
