@@ -31,6 +31,7 @@ try {
 		
 
 		# Act, Invoke PSRemotely
+		Start-Sleep -Seconds 4
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 		
 		# Assert

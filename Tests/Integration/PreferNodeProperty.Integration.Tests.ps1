@@ -33,6 +33,7 @@ try {
 	Describe "PSRemotely PreferNodeProperty usage, with PS V$($PSVersion)" -Tag Integration {
  		
 		# Act, Invoke PSRemotely
+		Start-Sleep -Seconds 4
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 
 		# Assert
