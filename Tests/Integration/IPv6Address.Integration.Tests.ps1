@@ -26,13 +26,14 @@ New-User -Credential $UserCred
 Add-LocalUserToLocalAdminGroup -UserName PSRemotely
 Disable-LocalAccountTokenFilterPolicy # This is needed to establish PSSession using the local user, revert in the end
 Start-Sleep -Seconds 4
-Set-MaxMemoryPerShellMB -Value 1024
+
 
 try {
 
 	Describe "PSRemotely IPv6Address usage, with PS V$($PSVersion)" -Tag Integration {
  		
 		# Act, Invoke PSRemotely
+		Start-Sleep -Seconds 5
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 
 		# Assert
