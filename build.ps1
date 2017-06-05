@@ -45,7 +45,7 @@ function Resolve-Module
 # Grab nuget bits, install modules, set build variables, start build.
 Get-PackageProvider -Name NuGet -ForceBootstrap | Out-Null
 
-Resolve-Module InvokeBuild,  Pester, BuildHelpers, PSScriptAnalyzer, PSDeploy
+Resolve-Module InvokeBuild,  Pester, BuildHelpers, PSScriptAnalyzer, PSDeploy -Verbose
 
 
 Set-BuildEnvironment

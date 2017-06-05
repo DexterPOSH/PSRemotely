@@ -245,28 +245,47 @@ Function CopyTestsFileToRemotelyNode {
         [Parameter(Mandatory)]
         [System.Management.Automation.Runspaces.PSSession]$session,
 
-
         [Parameter(Mandatory)]
         [String]$TestName,
 
         [Parameter(Mandatory)]
-        [String]$TestBlock
+        [String]$TestBlock,
+        
+        [Parameter(Mandatory=$False)]
+        [String]$NodeName
     )
 
     
     $copyTestsFileParams = @{
         'Session' = $session;
-        'ArgumentList' = @($PSRemotely, $testName, $testBlock)
+        'ArgumentList' = @($PSRemotely, $testName, $testBlock, $NodeName)
         'Scriptblock' = {
             param(
                 [HashTable]$PSRemotely,
                 [String]$testName,
-                [String]$testBlock
+                [String]$testBlock,
+                [String]$NodeName
             )
             # generate the test file name..naming convention -> NodeName.TestName.Tests.ps1
             # TODO - instead of the computername , the nodename defined in the environment config data should flow down here.
             # This would be used when using reportunit for the report creation.
-            $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            if ($NodeName) {
+                $testFileName = "{0}.{1}.Tests.ps1" -f $NodeName, $testName.replace(' ','_')
+                # Check that the filename does not contain invalid file characters e.g ::1 is the nodename in case of link local ipv6 address
+                # Credits : http://stackoverflow.com/questions/36408035/validating-file-name-input-in-powershell
+                    
+                $IndexOfInvalidChar = $testFileName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+                # IndexOfAny() returns the value -1 to indicate no such character was found
+                if($IndexOfInvalidChar -ne -1){
+                    # if there is an invalid character in the filename, fall back to using the computername
+                    Write-Warning -Message "Invalid character found in the file name > $($testFileName). Switching to using env:computername for filename"
+                    $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+                }
+            }
+            else {
+                $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $testName.replace(' ','_')
+            }
+            
             $testFile = "$($PSRemotely.PSRemotelyNodePath)\$testFileName"
             if ($Node) { 
                 # Check if the $Node var was populated in the remote session, then add param node to the test block

@@ -7,8 +7,8 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.PSRemotely.ps1"
 # use a dummy artifact with PSRemotely-
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
 Remove-Module $ENV:BHProjectName -ErrorAction SilentlyContinue
@@ -75,12 +75,12 @@ try {
 		Context '[BootStrap] Test if the Node tests were copied' {
 
 			It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.Bits_Service_test.Tests.ps1" | 
 					Should Exist
 			}
 
 			It 'Should create a Pester NUnit report for the Node' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).xml" |
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.xml" |
 					Should Exist
 			}	
 		}

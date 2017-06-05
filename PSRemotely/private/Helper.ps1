@@ -6,45 +6,44 @@ Function ProcessRemotelyJob {
     )
     $NodeName = $InputObject.Key
     $Job = $InputObject.Value
-    
-    foreach($childJob in $Job.ChildJobs)
-		{
-			if($childJob.Output.Count -eq 0){
-				[object] $outputStream = New-Object psobject
-			}
-			else {
-				[object] $outputStream = $childJob.Output | % { $_ }
-			}
+    foreach($childJob in $Job.ChildJobs){
+        if($childJob.Output.Count -eq 0){
+            [object] $outputStream = New-Object psobject
+        }
+        else {
+            
+            [object] $outputStream = $childJob.Output | Foreach-Object -Process { $_ }
+        }
 
-			$errorStream =    CopyStreams $childJob.Error
-			$verboseStream =  CopyStreams $childJob.Verbose
-			$debugStream =    CopyStreams $childJob.Debug
-			$warningStream =  CopyStreams $childJob.Warning
-			$progressStream = CopyStreams $childJob.Progress    
-    
-			$allStreams = @{ 
-								Error = $errorStream
-								Verbose = $verboseStream
-								DebugOutput = $debugStream
-								Warning = $warningStream
-								ProgressOutput = $progressStream
-							}
-    
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name __Streams -Value $allStreams
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetError -Value { return $this.__Streams.Error }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetVerbose -Value { return $this.__Streams.Verbose }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetDebugOutput -Value { return $this.__Streams.DebugOutput }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetProgressOutput -Value { return $this.__Streams.ProgressOutput }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetWarning -Value { return $this.__Streams.Warning }
-			$outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name RemotelyTarget -Value $NodeName
+        $errorStream =    CopyStreams $childJob.Error
+        $verboseStream =  CopyStreams $childJob.Verbose
+        $debugStream =    CopyStreams $childJob.Debug
+        $warningStream =  CopyStreams $childJob.Warning
+        $progressStream = CopyStreams $childJob.Progress    
 
-			if($childJob.State -eq 'Failed'){
-				$childJob | Receive-Job -ErrorAction SilentlyContinue -ErrorVariable jobError
-				$outputStream.__Streams.Error = $jobError
-			}
+        $allStreams = @{ 
+                            Error = $errorStream
+                            Verbose = $verboseStream
+                            DebugOutput = $debugStream
+                            Warning = $warningStream
+                            ProgressOutput = $progressStream
+                        }
+        #Write-Host -Object "$($outputStream.RemotelyTarget) NodeName -> $NodeName" -ForegroundColor red
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name __Streams -Value $allStreams
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetError -Value { return $this.__Streams.Error }
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetVerbose -Value { return $this.__Streams.Verbose }
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetDebugOutput -Value { return $this.__Streams.DebugOutput }
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetProgressOutput -Value { return $this.__Streams.ProgressOutput }
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType ScriptMethod -Name GetWarning -Value { return $this.__Streams.Warning }
+        $outputStream = Add-Member -InputObject $outputStream -PassThru -MemberType NoteProperty -Name RemotelyTarget -Value $NodeName
 
-			Write-Output -InputObject $outputStream
-		}
+        if($childJob.State -eq 'Failed'){
+            $childJob | Receive-Job -ErrorAction SilentlyContinue -ErrorVariable jobError
+            $outputStream.__Streams.Error = $jobError
+        }
+
+        Write-Output -InputObject $outputStream
+    }
 }
 
 Function ProcessRemotelyOutputToJSON {
@@ -86,13 +85,13 @@ Function GetFormattedTestResult {
         $outputHashArray = @()
         $testsGroup = $testResult |Group-Object -Property Describe  
         foreach ($testGroup in $testsGroup) {
-            $result = ($TestGroup.Group | select -ExpandProperty Passed ) -Notcontains $false
+            $result = ($TestGroup.Group | Select-Object -ExpandProperty Passed ) -Notcontains $false
             $outputHashArray += @{
                 Name = $testGroup.Name
                 Result = $result
                 TestResult =  @($testGroup.Group | 
-                                Where -Property Result -eq 'Failed' |
-                                Select -Property Describe, Context, Name, Result, ErrorRecord)
+                                Where-Object -Property Result -eq 'Failed' |
+                                Select-Object -Property Describe, Context, Name, Result, ErrorRecord)
                 }
             }
             Write-Output -InputObject $outputHashArray
@@ -130,7 +129,10 @@ Function Write-VerboseLog
             $Message = $ErrorInfo.Exception.Message
             $Functionname = $ErrorInfo.InvocationInfo.InvocationName
             $LineNo = $ErrorInfo.InvocationInfo.ScriptLineNumber
-            $scriptname = $(Split-Path -Path $ErrorInfo.InvocationInfo.ScriptName -Leaf)
+            if ($ErrorInfo.InvocationInfo.ScriptName) {
+                # this is done to correctly recieve the original error back from Pester mocks
+                $scriptname = $(Split-Path -Path $ErrorInfo.InvocationInfo.ScriptName -Leaf)
+            }
             Write-Verbose -Message "$scriptname - $Functionname - LineNo : $LineNo - $Message"           
             #$PSCmdlet.ThrowTerminatingError($ErrorInfo)
             #Write-Error -ErrorRecord $ErrorInfo -ErrorAction Stop # throw back the Error record 
@@ -151,10 +153,10 @@ Function Start-RemotelyJobProcessing {
             $AllJobsCompletedHash.Add($PSItem, $False)
         }
 
-        $CloneJobHash = $AllJobsCompletedHash.Clone() # used to iterate over the Hashtable
-
         do {
+            $CloneJobHash = $AllJobsCompletedHash.Clone() # used to iterate over the Hashtable
             foreach ($nodeJobStatus in $CloneJobHash.GetEnumerator()) {
+                Write-VerboseLog -Message "Processing for Node -> $($nodeJobStatus.key) "
                 if ($nodeJobStatus.Value) {
                     # node job status is True, it has been processed
                     Write-VerboseLog -Message "PSRemotely job already processed for Node -> $($nodeJobStatus.key) "
@@ -167,13 +169,11 @@ Function Start-RemotelyJobProcessing {
 
                     if ($enum.Value | Where-Object -Property State -In @('Completed', 'Failed')) {
                         Write-VerboseLog -Message "PSRemotely job finished for Node -> $($nodeJobStatus.key). Processing it now."
-                        $enum | ProcessRemotelyJob | ProcessRemotelyOutputToJSON
+                        $enum | ProcessRemotelyJob -ErrorAction Stop | ProcessRemotelyOutputToJSON -ErrorAction Stop
                         $AllJobsCompletedHash[$enum.key] = $true
                     }
-                    
                 }
             }
-
         }  until (@($allJobsCompletedHash.Values) -notcontains $False)
     }
     CATCH {

@@ -6,8 +6,8 @@
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.IPv6Address.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
@@ -22,17 +22,18 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 # Create a new User named PSRemotely for testing the PSSession
 $UserCred = New-Object -TypeName PSCredential -ArgumentList @('PSRemotely',$(ConvertTo-SecureString -String 'T3stPassw0rd#' -AsPlainText -Force))
-$userCredHashtable = @{"$Env:COMPUTERNAME"=$UserCred}
 New-User -Credential $UserCred 
 Add-LocalUserToLocalAdminGroup -UserName PSRemotely
 Disable-LocalAccountTokenFilterPolicy # This is needed to establish PSSession using the local user, revert in the end
 Start-Sleep -Seconds 4
+
 
 try {
 
 	Describe "PSRemotely IPv6Address usage, with PS V$($PSVersion)" -Tag Integration {
  		
 		# Act, Invoke PSRemotely
+		Start-Sleep -Seconds 5
 		$Result = Invoke-PSRemotely -Script $RemotelyTestFile
 
 		# Assert
@@ -76,6 +77,16 @@ try {
 
 			It "Should have targeted the correct Node" {
 				$JsonObject.NodeName | Should Be '::1'
+			}
+		}
+
+		Context 'Validate the Nunit test result file generated' {
+
+			It "Should used ComputerName instead of NodeName for the Nunit XML file" {
+				# Should drop a Nunit XML file with the hostname.xml format
+				# the nodename is ::1 which is invalid file name, so validate it
+				"$($PSRemotely.PSRemotelyNodePath)\$($env:COMPUTERNAME).xml" |
+					Should Exist
 			}
 		}
 

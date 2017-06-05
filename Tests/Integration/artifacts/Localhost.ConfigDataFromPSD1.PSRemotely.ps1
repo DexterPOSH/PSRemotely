@@ -15,11 +15,11 @@ Set-Content -Value $PSD1Content -Path $ConfigDataPath -Force
 # PSRemotely tests
 PSRemotely -Path $ConfigDataPath  {
 	Node $AllNodes.Where({$PSItem.Type -eq 'Compute'}).NodeName {
-		Describe 'Bits Service test' {
+		Describe 'Service test' {
 			
 			$Service = Get-Service -Name $node.ServiceName # See the use of $node variable here
 			
-			It "Should have a service named bits" {
+			It "Should have a service named $($node.ServiceName)" {
 				$Service | Should Not BeNullOrEmpty
 			}
 			

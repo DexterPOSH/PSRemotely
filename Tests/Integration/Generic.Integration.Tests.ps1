@@ -4,10 +4,9 @@ if(-not $ENV:BHProjectPath)
 }
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-# PSRemotely Test file to be used for this Integration test.
-$RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
@@ -21,7 +20,8 @@ Import-Module (Join-Path $ENV:BHProjectPath $ENV:BHProjectName) -Force
 
 try {
     Describe "PSRemotely only accepts *.PSRemotely.ps1 extension files" {
-
+        # PSRemotely Test file to be used for this Integration test.
+        $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.ps1"
         $null = Invoke-PSRemotely -Script $RemotelyTestFile -ErrorVariable PSRemotelyError 2>&1
 
         It 'Should throw an error' {
@@ -30,6 +30,26 @@ try {
 
         It 'Should throw a custom error message' {
             ($PSRemotelyError -like '* is not a *.PSRemotely.ps1 file.') | Should NOT BeNullOrEmpty 
+        }
+    }
+
+    Describe "PSRemotely - Fix parsing Describe blocks" {
+        # Issue - https://github.com/DexterPOSH/PSRemotely/issues/27
+
+        Context "Ops validation tests using possible usage combinations with Describe keyword" {
+            $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.name.tag.PSRemotely.ps1"
+
+            It 'Should NOT throw an error' {
+                {Invoke-PSRemotely -Script $RemotelyTestFile} | Should NOT Throw
+            }
+            
+            (1..7).foreach({
+                It "Should have placed a localhost.Test$($PSItem).Tests.ps1 file in the PSRemotelyNodePath" {
+                    $TestFileName = "localhost.Test{0}.Tests.ps1" -f $PSItem
+                    $TestFilePath = "{0}\{1}" -f $Global:PSRemotely.PSRemotelyNodePath, $TestFileName
+                    $TestFilePath | Should Exist
+                }  
+            })
         }
     }
 

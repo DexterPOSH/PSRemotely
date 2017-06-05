@@ -6,8 +6,8 @@
 $PSVersion = $PSVersionTable.PSVersion.Major
 # PSRemotely Test file to be used for this Integration test.
 $RemotelyTestFile = "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.basic.PSRemotely.ps1"
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 
 # Import the TestHelpers
 Get-ChildItem -Path "$env:BHProjectPath\Tests\TestHelpers\*.psm1" |
@@ -114,12 +114,12 @@ try {
 		Context '[BootStrap] Test if the Node tests were copied' {
 
 			It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.Bits_Service_test.Tests.ps1" | 
 					Should Exist
 			}
 
 			It 'Should create a Pester NUnit report for the Node' {
-				"$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).xml" |
+				"$($Global:PSRemotely.PSRemotelyNodePath)\localhost.xml" |
 					Should Exist
 			}	
 		}
@@ -164,7 +164,7 @@ try {
 				}
 					
 			}
-		} 
+		}
 
 	}
 
@@ -173,7 +173,7 @@ try {
 		Context 'Using the Get-RemoteSession function' {
 			$RemoteSession = Get-RemoteSession
 
-			It 'Should return the PSSession starting with name Remote-NodeName' {
+			It 'Should return the PSSession starting with name PSRemotely-NodeName' {
 				$RemoteSession.Name | Should Be 'PSRemotely-Localhost'
 			}
 

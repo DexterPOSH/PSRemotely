@@ -182,7 +182,7 @@ And in order to invoke PSRemotely along with specifying the .json file, use the 
 ```powershell
 Invoke-PSRemotely -Script @{
     Path="<Path to the ConfigData_with_psd1.PSRemotely.ps1>";
-    Parameters=@{PSD1ConfigDataPath="<Path to the dev_environment.json>"}
+    Parameters=@{JSONConfigDataPath="<Path to the dev_environment.json>"}
 }
 ```
 

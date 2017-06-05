@@ -104,7 +104,7 @@ Function Node {
 					$testNameandTestBlockArray | Foreach-Object -Process {
 						# Copy each tests file to the remote node.
 						Write-VerboseLog -Message "Copying test named $($PSitem.Keys -join ' ') on Node -> $nodeName"
-						CopyTestsFileToRemotelyNode -Session $session -TestName $PSItem.Keys -TestBlock $PSItem.Values
+						CopyTestsFileToRemotelyNode -Session $session -NodeName $nodeName -TestName $PSItem.Keys -TestBlock $PSItem.Values
 					}
 
 					# copy/overwrite the Artifacts on the PSRemotely nodes
@@ -121,6 +121,7 @@ Function Node {
 					Write-VerboseLog -Message "Setting up Node -> $nodeName. Done, Invoke the full test suite now."
 					$job = Invoke-Command -Session $session -ScriptBlock {
 						param(
+							[string]$NodeName,
 							[hashtable]$PSRemotely,
 							[string[]]$tag
 						)
@@ -131,13 +132,29 @@ Function Node {
 							Import-Module "$($PSRemotely.PSRemotelyNodePath)\lib\$moduleName\$moduleVersion\$($ModuleName).psd1";
 							Write-Verbose -Verbose -Message "Imported module $($PSitem.ModuleName) from PSRemotely lib folder"
 						}
-						#$nodeOutputFile = "{0}\{1}.xml" -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName
+						if ($NodeName) {
+							# if the nodename was supplied (this will always be supplied)
+							$OutputFileName = '{0}.xml' -f $($NodeName);
+							$IndexOfInvalidChar = $OutputFileName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+							# IndexOfAny() returns the value -1 to indicate no such character was found
+							if($IndexOfInvalidChar -ne -1){
+								# if there is an invalid character in the filename, fall back to using the computername
+								Write-Warning -Message "Invalid character found in the file name > $($OutputFile). Switching to using env:computername for filename"
+								$OutputFileName = "{0}.xml" -f $env:COMPUTERNAME
+							}
+						}
+						else {
+							$OutputFileName = '{0}.xml' -f $env:COMPUTERNAME;
+						}
+						 # generate the file path
+						$OutputFile = "{0}\{1}" -f $($PSRemotely.PSRemotelyNodePath), $OutputFileName
 						$invokePesterParams = @{
 							PassThru = $True;
 							Quiet = $True;
 							OutputFormat = 'NunitXML';
-							OutputFile = '{0}\{1}.xml' -f $($PSRemotely.PSRemotelyNodePath), $Env:ComputerName;
+							OutputFile = $OutputFile
 						}
+
 						# invoke pester now to run all the tests
 						if ($Tag) {
 							# Add the tag
@@ -150,7 +167,7 @@ Function Node {
 							else {
 								Invoke-Pester -Script "$($PSRemotely.PSRemotelyNodePath)\*.tests.ps1" @invokePesterParams
 							}
-					} -ArgumentList $PSRemotely, $Tag -AsJob 
+					} -ArgumentList $NodeName,$PSRemotely, $Tag -AsJob 
 
 					# Add the nodename and Job object to the hash, used further for the processing the output
 					$testjobHash.Add($nodeName, $job)

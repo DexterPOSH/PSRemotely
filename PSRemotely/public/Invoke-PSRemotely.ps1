@@ -140,17 +140,32 @@ Function Invoke-PSRemotely {
                     # build the splat hashtable
                    $invokeTestParams = @{
                         Session = $session;
-                        ArgumentList = $JSONInput #@(,$Object.Tests.Name);
+                        ArgumentList = $JSONInput, $Object.NodeName #@(,$Object.Tests.Name);
                         ScriptBlock = {
                             param(
-                                [String]$JSONString
+                                [String]$JSONString,
+                                [String]$NodeName
                                 )
                             $Object = ConvertFrom-Json -InputObject $JSONString
                             foreach ($test in @($Object.Tests.Name)) {
                                 Write-Verbose -Message "Processing $test" -Verbose
-                                $testFileName = "{0}.{1}.Tests.ps1" -f $env:ComputerName, $test.replace(' ','_')
+                                if ($NodeName) {
+                                    $testFileName = "{0}.{1}.Tests.ps1" -f $NodeName, $test.replace(' ','_')
+                                    # Check that the filename does not contain invalid file characters e.g ::1 is the nodename in case of link local ipv6 address
+                                    $IndexOfInvalidChar = $testFileName.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars())
+                                    # IndexOfAny() returns the value -1 to indicate no such character was found
+                                    if($IndexOfInvalidChar -ne -1){
+                                        # if there is an invalid character in the filename, fall back to using the computername
+                                        Write-Warning -Message "Invalid character found in the file name > $($testFileName). Switching to using env:computername for filename"
+                                        $testFileName = "{0}.{1}.Tests.ps1" -f $Env:COMPUTERNAME, $test.replace(' ','_')
+                                    }
+                                }
+                                else {
+                                    $testFileName = "{0}.{1}.Tests.ps1" -f $env:COMPUTERNAME, $test.replace(' ','_')
+                                }
+                                
                                 $testFile = "$($Global:PSRemotely.PSRemotelyNodePath)\$testFileName"
-                                $outPutFile = "{0}\{1}.{2}.xml" -f 	 $PSRemotely.PSRemotelyNodePath, $nodeName, $testName
+                                $outPutFile = "{0}\{1}.{2}.xml" -f 	 $PSRemotely.PSRemotelyNodePath, $nodeName, $test
                                 if ($Node) {
                                     Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
                                 }

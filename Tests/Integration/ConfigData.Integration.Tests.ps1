@@ -8,8 +8,8 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 $RemotelyTestFiles = @("$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigData.PSRemotely.ps1",
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromJSON.PSRemotely.ps1",
                         "$env:BHProjectPath\Tests\Integration\artifacts\Localhost.ConfigDataFromPSD1.PSRemotely.ps1")
-$RemotelyJSONFile = "$Env:BHPSModulePath\PSRemotely.json"
-$ArtifactsPath = "$Env:BHPSModulePath\lib\Artifacts"
+$RemotelyJSONFile = "$ENV:BHModulePath\PSRemotely.json"
+$ArtifactsPath = "$ENV:BHModulePath\lib\Artifacts"
 $RemotelyConfig = ConvertFrom-Json -InputObject (Get-Content $RemotelyJSONFile -Raw)
 
 # Import the TestHelpers
@@ -126,7 +126,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
             Context '[BootStrap] Test if the Node tests were copied' {
 
                 It 'Should drop a file with format <NodeName>.<Describe_block>.Tests.ps1' {
-                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Bits_Service_test.Tests.ps1" | 
+                    "$($Global:PSRemotely.PSRemotelyNodePath)\$($env:ComputerName).Service_test.Tests.ps1" | 
                         Should Exist
                 }
 
@@ -146,7 +146,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                     
                     It 'Should return the result of each Describe block' {
                         $Object.Tests[0].Result | Should Be $True
-                        $Object.Tests[0].Name | Should Be 'Bits Service test'
+                        $Object.Tests[0].Name | Should Be 'Service test'
                     }
 
                     It 'Should have the TestResult empty' {
@@ -161,7 +161,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
 
                     It 'Sould return the result of each Describe block' {
                         $object.Tests[0].Result | Should Be $False
-                        $Object.Tests[0].Name | Should Be 'Bits Service test'
+                        $Object.Tests[0].Name | Should Be 'Service test'
                     }
 
                     It 'Should Write Error thrown to TestResult' {
@@ -169,7 +169,7 @@ Foreach ($RemotelyTestFile in $RemotelyTestFiles) {
                     }
 
                     It 'Should return more details about the test failed in the TestResult' {
-                        $Object.Tests[0].TestResult.Describe | Should Be 'Bits Service Test'
+                        $Object.Tests[0].TestResult.Describe | Should Be 'Service Test'
                         $Object.Tests[0].TestResult.Name | Should BeExactly 'Should be running'
                         $Object.Tests[0].TestResult.Result | Should Be 'Failed'
                         $Object.Tests[0].TestResult.ErrorRecord | Should NOT BeNullOrEmpty
