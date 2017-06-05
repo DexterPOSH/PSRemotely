@@ -1,7 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/w22ytbuyjr7a10ia/branch/master?svg=true)](https://ci.appveyor.com/project/DexterPOSH/psremotely/branch/master) [![Documentation Status](https://readthedocs.org/projects/psremotely/badge/?version=latest)](http://psremotely.readthedocs.io/en/latest/)
 [![GitPitch](https://gitpitch.com/assets/badge.svg)](https://gitpitch.com/dexterposh/PSRemotely/master?grs=github&t=white)
-![alt](PSRemotely.png)
 
+![alt](PSRemotely.png)
 ============
 
 PSRemotely, started as a fork of the [Remotely project](https://github.com/PowerShell/Remotely) and over the time grew out of it.
