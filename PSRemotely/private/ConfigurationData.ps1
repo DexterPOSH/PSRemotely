@@ -129,3 +129,27 @@ function ConvertPSObjectToHashtable
         }
     }
 }
+
+
+Function Sanitize-PesterSplatHash {
+	[CmdletBinding()]
+	param(
+		# Pass the Pester splat hash to be modified
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[HashTable]$SplatHash
+	)
+
+	# Filter our the conflicting keys from the PesterSplathash
+	# Keys to remove - Script, PassThru, Quiet, OutputFormat, OutPutFile
+	$ExcludeKeys  = @('Script','PassThru','Quiet','OutputFormat','OutputFile')
+	$CloneHash = $SplatHash.Clone()
+	Foreach ($Key in $CloneHash.Keys) {
+		# process each key present in the splat hash
+		if ($ExcludeKeys -contains $Key) {
+			# remove this key and value
+			Write-Warning -Message "Key $Key found in the SplatHash. Removing it"
+			$SplatHash.Remove($Key)
+		}
+	}
+}
