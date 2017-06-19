@@ -213,13 +213,13 @@ InModuleScope -ModuleName $ENV:BHProjectName {
             foreach ($key in $OrigSplatHash.keys) {
                 
                 if ($ExcludedKeys -contains $key) {
-                    It "Should NOT have the reserved key -> $reservedKey in the Splat hash" {
-                        $SplatHash.ContainsKey($reservedKey) | Should Be $False
+                    It "Should NOT have the reserved key -> $key in the Splat hash" {
+                        $SplatHash.ContainsKey($key) | Should Be $False
                     } 
                 }
                 else {
                     It "Should retain the non-reserved key -> $key in the Splat hash" {
-                        $SplatHash.ContainsKey($reservedKey) | Should Be $True
+                        $SplatHash.ContainsKey($key) | Should Be $True
                     }
                 }
 
