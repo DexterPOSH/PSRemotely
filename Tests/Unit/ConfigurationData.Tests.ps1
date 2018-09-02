@@ -188,4 +188,47 @@ InModuleScope -ModuleName $ENV:BHProjectName {
                 }
         }
     }
+
+    Describe "Sanitize-PesterSplatHash" -Tag UnitTest {
+
+        Context "Sanitizing the Splat hash" {
+            # Arrange
+            $SplatHash = @{
+                Script=".\test.ps1";
+                Tag = @('Dev','WebServers');
+                PassThru=$False;
+                Quiet=$True;
+                OutputFormat="XML";
+                OutputFile="dummy.xml";
+                TestName='Dummy test';
+            }
+            $OrigSplatHash = $SplatHash.Clone()
+            $ExcludedKeys  = @('Script','PassThru','Quiet','OutputFormat','OutputFile')
+
+            # Act
+            $Result = Sanitize-PesterSplatHash -SplatHash $SplatHash
+
+            # Assert
+
+            foreach ($key in $OrigSplatHash.keys) {
+                
+                if ($ExcludedKeys -contains $key) {
+                    It "Should NOT have the reserved key -> $key in the Splat hash" {
+                        $SplatHash.ContainsKey($key) | Should Be $False
+                    } 
+                }
+                else {
+                    It "Should retain the non-reserved key -> $key in the Splat hash" {
+                        $SplatHash.ContainsKey($key) | Should Be $True
+                    }
+                }
+
+            }
+            
+            It "Should not return anything" {
+                $Result | Should Be $Null
+            }
+            
+        }  
+    }
 }

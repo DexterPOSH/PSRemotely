@@ -55,7 +55,19 @@ Function Invoke-PSRemotely {
             ]
         }
 
-    
+    .PARAMETER PesterSplatHash
+        Pass a hash table which is splatted to Invoke-Pester's execution on the PSRemotely node.
+        This let's you pass arguments to Invoke-Pester such as -Tag, -ExcludeTag, -Strict etc.
+        Note - PSRemotely automatically supplies the below arguments to Invoke-Pester. So if these are
+        specified then it will be ignored.
+
+        Script = <Based on the input this gets passed to Pester>
+        PassThru = $True;
+        Quiet = $True;
+        OutputFormat = 'NunitXML';
+        OutputFile = <NodeName>.xml;
+         
+
     .EXAMPLE
         PS> Invoke-PSRemotely
 
@@ -101,7 +113,7 @@ Function Invoke-PSRemotely {
 #>
     [CmdletBinding(DefaultParameterSetName='BootStrap',SupportsShouldProcess=$True)]
     param(
-        [Parameter(Position=-0,
+        [Parameter(Position=0,
                     Mandatory=$False,
                     ParameterSetName='BootStrap',
                     ValueFromPipeline=$true)]
@@ -110,7 +122,12 @@ Function Invoke-PSRemotely {
         [Parameter(Position=0,
                     Mandatory=$true,
                     ParameterSetName='JSON')]
-        [String]$JSONInput
+        [String]$JSONInput,
+
+        [Parameter(Position=1,
+                    Mandatory=$False)]
+        [Alias('SplatHash')]
+        [HashTable]$PesterSplatHash
 
     )
     BEGIN {
@@ -137,14 +154,19 @@ Function Invoke-PSRemotely {
                                 Select-Object -ExpandProperty Value | 
                                 Select-Object -ExpandProperty Session
                     
+                    # Check if the Pester splat hash was passed
+                    if ($PesterSplatHash) {
+                        Sanitize-PesterSplatHash -SplatHash $PesterSplatHash
+                    }
                     # build the splat hashtable
                    $invokeTestParams = @{
                         Session = $session;
-                        ArgumentList = $JSONInput, $Object.NodeName #@(,$Object.Tests.Name);
+                        ArgumentList = $JSONInput, $Object.NodeName, $PesterSplatHash #@(,$Object.Tests.Name);
                         ScriptBlock = {
                             param(
                                 [String]$JSONString,
-                                [String]$NodeName
+                                [String]$NodeName,
+                                [HashTable]$PesterSplatHash
                                 )
                             $Object = ConvertFrom-Json -InputObject $JSONString
                             foreach ($test in @($Object.Tests.Name)) {
@@ -166,11 +188,22 @@ Function Invoke-PSRemotely {
                                 
                                 $testFile = "$($Global:PSRemotely.PSRemotelyNodePath)\$testFileName"
                                 $outPutFile = "{0}\{1}.{2}.xml" -f 	 $PSRemotely.PSRemotelyNodePath, $nodeName, $test
+                                $invokePesterParams = @{
+                                    PassThru = $True;
+                                    Quiet = $True;
+                                    OutputFormat = 'NunitXML';
+                                    OutputFile = $OutputFile
+                                }
+
+                                if ($PesterSplatHash) {
+                                    $invokePesterParams += $PesterSplatHash
+                                }
+                                
                                 if ($Node) {
-                                    Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
+                                    Invoke-Pester -Script @{Path=$($TestFile); Parameters=@{Node=$Node}} @invokePesterParams
                                 }
                                 else {
-                                    Invoke-Pester -Script $testFile  -PassThru -Quiet -OutputFormat NUnitXML -OutputFile $outPutFile
+                                    Invoke-Pester -Script $testFile @invokePesterParams
                                 }
                             }
                         }; # end scriptBlock
@@ -209,6 +242,7 @@ Function Invoke-PSRemotely {
                     try {
                         do{
                             Write-VerboseLog -Message "Invoking test script -> $($testscript.path)"
+                            # TODO pass the PesterSplatHash if specified in the command line
                             & $invokeTestScript -Path $testScript.Path -Arguments $testScript.Arguments -Parameters $testScript.Parameters
                         } until ($true)
                     }
